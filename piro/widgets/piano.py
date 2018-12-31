@@ -17,14 +17,15 @@ class PrPiano(BoxLayout):
         self.size = (150, 1640)
 
         # keys
-        self.pressed_keys = {}
+        self.keypressed = {0:False,}
         self.keymap = []
+        self.keyoverlay = {'ebony':InstructionGroup(), 'ivory':InstructionGroup()}
 
         # keymap
         self._set_keymap()
 
-        # canvas
-        self.update_canvas()
+        # canvas init
+        self.draw_canvas()
 
         # children
         #self.add_widget(Image(source='./Source/PianoRoll/images/smile2.png', keep_ratio=False, allow_stretch=True))
@@ -48,9 +49,60 @@ class PrPiano(BoxLayout):
 
     # public methods
     def note(self, note, on):
-        self.pressed_keys["%d"%self.keymap[note]] = on
+        self.keypressed[self.keymap[note]] = on
 
-    def update_canvas(self):
+    def update_keyoverlay(self):
+        self.keyoverlay['ebony'].clear()
+        self.keyoverlay['ivory'].clear()
+        self.draw_keyoverlay()
+        print("piano : instruction# :", len(self.canvas.children))
+
+    def draw_keyoverlay(self):
+        self.keyoverlay['ebony'].clear()
+        self.keyoverlay['ivory'].clear()
+
+        # color pick
+        self.keyoverlay['ivory'].add(Color(0, 1, 1, 0.8))
+
+        #
+        # keypressed indicator draw
+        #        
+        # ivory key intervals
+        ivory_intervals = [19, 25, 18, 19, 25, 25, 18]
+        pos_octave = []
+        # y position, key idx_key
+        pos_y = 1
+        idx_key = 0
+        # iteration for octave
+        for i in range(self._OCTAVES):
+            # position for the octave start
+            pos_octave.append(pos_y)
+            for interval in ivory_intervals:
+                if self.keypressed.get(idx_key, False):
+                    self.keyoverlay['ivory'].add(Rectangle(pos=(0, pos_y), size=(90, interval), group='ivory'))
+                pos_y += interval + 1
+                idx_key += 1
+
+        # color pick
+        self.keyoverlay['ebony'].add(Color(0, 1, 1, 0.8))
+
+        #
+        # ebony keys
+        #
+        # ivory key intervals
+        ebony_interval = 12
+        # y position
+        pos_y = 1
+        # iteration for octave
+        for i in range(self._OCTAVES):
+            for idx, interval in enumerate(ivory_intervals):
+                pos_y += interval + 1
+                if idx not in [2, 6]:
+                    if self.keypressed.get(idx_key, False):
+                        self.keyoverlay['ebony'].add(Rectangle(pos=(0, pos_y-6), size=(60, ebony_interval), group='ebony'))
+                    idx_key += 1
+
+    def draw_canvas(self):
         # clear canvas
         self.canvas.clear()
 
@@ -85,6 +137,12 @@ class PrPiano(BoxLayout):
                 idx_key += 1
 
         #
+        # keypressed overlay - ivory
+        #
+        self.draw_keyoverlay()
+        self.canvas.add(self.keyoverlay['ivory'])
+
+        #
         # ebony keys
         #
         # color pick - ebony
@@ -105,6 +163,11 @@ class PrPiano(BoxLayout):
                     idx_key += 1
 
         #
+        # keypressed overlay - ebony
+        #
+        self.canvas.add(self.keyoverlay['ebony'])
+
+        #
         # octave labels
         #
         self.canvas.add(Color(1, 1, 1, 1.0))
@@ -120,10 +183,5 @@ class PrPiano(BoxLayout):
             text = label.texture
             self.canvas.add(
                 Rectangle(pos=(2, y-text.height/2), size=text.size, texture=text))
-
-        #
-        # keypressed overlay
-        #
-        self.canvas.add(self.keypressed_group())        
 
         print("piano:", self.pos, self.size, len(self.canvas.children), idx_key)

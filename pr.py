@@ -32,7 +32,7 @@ class PrRoot(BoxLayout):
         self.pr_roll_view = widgets.PrRollView()
         # midi
         self.midi = PrMidi(
-            midi_filename='.\\source\\mido test\\midi\\beeth9-2.mid',
+            midi_filename='.\\midi\\midifiles\\fur-elise.mid',
             midi_portname='Microsoft GS Wavetable Synth 0')
 
         # binds
@@ -68,15 +68,15 @@ class PrRoot(BoxLayout):
             if msg.velocity == 0:
                 print(msg.note, 'is off @', now)
                 piano.note(msg.note, on=False)
-                #piano.update_canvas()
+                piano.update_keyoverlay()
             else:
                 print(msg.note, 'is on  @', now)
                 piano.note(msg.note, on=True)
-                #piano.update_canvas()
+                piano.update_keyoverlay()
         elif msg.type == 'note_off':
             print(msg.note, 'is off @', now)
             piano.note(msg.note, on=False)
-            #piano.update_canvas()
+            piano.update_keyoverlay()
         else:
             pass
 
@@ -84,9 +84,9 @@ class PrRoot(BoxLayout):
         """Test Button"""
         piano = self.pr_piano_view.pr_piano
 
-        piano.pressed_keys = []
-        piano.update_canvas()
-        print(piano.pressed_keys)
+        #piano.pressed_keys = []
+        #piano.update_canvas()
+        piano.update_groups()
 
     def _roll_scroll_sync(self, instance, scroll_y):
         """Sync Scroll between piano and roll views"""
@@ -101,7 +101,7 @@ class PrApp(App):
     """Main App"""
     def build(self):
         # window size / position
-        Window.size = (1800, 1000)
+        Window.size = (300, 300)
         Window.left, Window.top = 300, 200
 
         # members
