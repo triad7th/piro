@@ -35,4 +35,5 @@ class MainApp(App):
         print("instance size:", instance.size)
 
 if __name__ == '__main__':
+    print("hello, piro world!")
     MainApp().run()
