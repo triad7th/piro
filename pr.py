@@ -86,7 +86,8 @@ class PrRoot(BoxLayout):
 
         #piano.pressed_keys = []
         #piano.update_canvas()
-        piano.update_groups()
+        #piano.update_groups()
+        print(piano.keypressed)
 
     def _roll_scroll_sync(self, instance, scroll_y):
         """Sync Scroll between piano and roll views"""
