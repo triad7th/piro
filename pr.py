@@ -22,6 +22,11 @@ class PrRoot(BoxLayout):
 
         # props
         self.orientation = 'vertical'
+
+        # midi
+        self.midi = PrMidi(
+            midi_filename='.\\midi\\midifiles\\fur-elise.mid',
+            midi_portname='Microsoft GS Wavetable Synth 0')
         
         # menu widget
         self.pr_menu = widgets.PrMenu()        
@@ -30,10 +35,6 @@ class PrRoot(BoxLayout):
         # piano-roll layout contains 2 scrollviews - piano/roll
         self.pr_piano_view = widgets.PrPianoView()
         self.pr_roll_view = widgets.PrRollView()
-        # midi
-        self.midi = PrMidi(
-            midi_filename='.\\midi\\midifiles\\fur-elise.mid',
-            midi_portname='Microsoft GS Wavetable Synth 0')
 
         # binds
         self.pr_roll_view.bind(scroll_y=self._roll_scroll_sync)
@@ -83,11 +84,14 @@ class PrRoot(BoxLayout):
     def _menu_button_test(self, instanace):
         """Test Button"""
         piano = self.pr_piano_view.pr_piano
+        roll = self.pr_roll_view.pr_roll
 
         #piano.pressed_keys = []
         #piano.update_canvas()
         #piano.update_groups()
-        print(piano.keypressed)
+        #print(piano.keypressed)
+        print(roll.notemap)
+        roll.draw_noteoverlay(midi=self.midi)
 
     def _roll_scroll_sync(self, instance, scroll_y):
         """Sync Scroll between piano and roll views"""

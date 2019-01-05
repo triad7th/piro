@@ -27,8 +27,6 @@ class PrPiano(BoxLayout):
         # canvas init
         self.draw_canvas()
 
-        # children
-        #self.add_widget(Image(source='./Source/PianoRoll/images/smile2.png', keep_ratio=False, allow_stretch=True))
     # private methods
     def _set_keymap(self):
         # set reverse keymap

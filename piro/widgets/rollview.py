@@ -31,13 +31,15 @@ class PrRollView(ScrollView):
         # zoom out
         if text == 'g':
             self.pr_roll.width *= 1.1
-            self.pr_roll.update_canvas()
+            self.pr_roll.draw_noteoverlay()
+            self.pr_roll.draw_canvas()            
             #print('zoom out', self.pr_roll.width)
 
         # zoom in
         elif text == 'h':
             self.pr_roll.width *= 0.9
-            self.pr_roll.update_canvas()
+            self.pr_roll.draw_noteoverlay()
+            self.pr_roll.draw_canvas()
             #print('zoom in', self.pr_roll.width)
 
         return True

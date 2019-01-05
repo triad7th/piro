@@ -56,6 +56,14 @@ class PrMidi():
             return mido.tick2second(1, self.tempo, self.ppqn)
         return None
 
+    def get_length(self):
+        """ get total length of the song """
+        ttl = .0
+        if self.ppqn:
+            for msg in self.midi_file:
+                ttl += msg.time
+        return ttl
+
     def open(self, midi_filename=None, midi_portname=None):
         """ open midifile and(or) port """
         if midi_filename:
