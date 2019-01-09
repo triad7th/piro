@@ -1,3 +1,6 @@
+import sys
+sys.path.append(".\\")
+
 from kivy.config import Config
 Config.set('kivy', 'kivy_clock', 'free_only')
 
@@ -20,6 +23,7 @@ class PrMidi():
         self._scheduled_evt = False
         self.playing = False
         self.callback = None
+        self.callback_timebar = None
 
         # midi file related
         self.tempo = None
@@ -53,7 +57,7 @@ class PrMidi():
     def get_spt(self):
         """ get second per tick """
         if self.ppqn:
-            return mido.tick2second(1, self.tempo, self.ppqn)
+            return mido.tick2second(1, self.ppqn, self.tempo)
         return None
 
     def get_length(self):
@@ -61,7 +65,6 @@ class PrMidi():
         ttl = .0
         if self.ppqn:
             for msg in self.midi_file:
-                print(msg, ttl)
                 ttl += msg.time
         return ttl
 
@@ -108,7 +111,7 @@ class PrMidi():
             # helper reset
             self.helper.reset()
 
-    def trigger(self, msg=None, callback=None):
+    def trigger(self, msg=None, callback=None, callback_timebar=None):
         """ trigger midifile play """
         if not self.playing:
             # set flag
@@ -124,6 +127,7 @@ class PrMidi():
 
                 # set the callback
                 self.callback = callback
+                self.callback_timebar = callback_timebar
 
                 # trigger!
                 self._scheduled_evt = Clock.schedule_interval_free(self.playback, self.spt)
@@ -151,7 +155,10 @@ class PrMidi():
         """ callback for midifile play """
         if self.playing:
             # get now
-            now = self.clock.elapsed(begin_with_this=True)            
+            now = self.clock.elapsed(begin_with_this=True)
+            # timbar callback
+            if self.callback_timebar:
+                self.callback_timebar(self, now)       
             # if it's passed the next event time
             if now >= self.next_evt_time:
                 # play current message
@@ -177,7 +184,7 @@ if __name__ == '__main__':
     class PlayApp(App):
         def build(self):
             self.prMidi = prMidi = PrMidi(
-                midi_filename='.\\source\\mido test\\midi\\beeth9-2.mid',
+                midi_filename='.\\midi\\midifiles\\fur-elise.mid',
                 midi_portname='Microsoft GS Wavetable Synth 0')
     
             prMidi.test()            

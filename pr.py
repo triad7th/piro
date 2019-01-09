@@ -27,6 +27,7 @@ class PrRoot(BoxLayout):
         self.midi = PrMidi(
             midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
             midi_portname='Microsoft GS Wavetable Synth 0')
+        self.now = .0
         
         # menu widget
         self.pr_menu = widgets.PrMenu()        
@@ -56,13 +57,26 @@ class PrRoot(BoxLayout):
         if btn.text == 'Play':
             btn.text = 'Stop'
             self.midi.reload()
-            self.midi.trigger(callback=self._play_callback)
+            self.midi.trigger(
+                callback=self._play_callback,
+                callback_timebar=self._play_callback_timebar
+            )
         else:
             btn.text = 'Play'
             self.midi.stop()
+            self.now = .0
+    def _play_callback_timebar(self, instance, now):
+        """Callback for Timebar - !!! frequent calls !!!"""
+        roll = self.pr_roll_view.pr_roll
+
+        if now - self.now > 0.075:
+            self.now = now
+            roll.draw_timebar(now)
+
     def _play_callback(self, instance, msg, now):
         '''Callback for Play'''
         piano = self.pr_piano_view.pr_piano
+        roll = self.pr_roll_view.pr_roll
 
         # draw note_on/off status
         if msg.type == 'note_on':
