@@ -42,8 +42,7 @@ class PrPiano(BoxLayout):
         self.keymap = []
         for idx in range(len(rev_keymap)):
             self.keymap.append(rev_keymap.index(idx))
-
-        print (self.keymap)            
+        #print (self.keymap)            
 
     # public methods
     def note(self, note, on):

@@ -25,7 +25,7 @@ class PrRoot(BoxLayout):
 
         # midi
         self.midi = PrMidi(
-            midi_filename='.\\midi\\midifiles\\fur-elise.mid',
+            midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
             midi_portname='Microsoft GS Wavetable Synth 0')
         
         # menu widget
@@ -48,6 +48,7 @@ class PrRoot(BoxLayout):
         self.add_widget(self.pr_menu)
         self.add_widget(self.pr_pianoroll_view)
 
+    # callbacks
     def _menu_button_play(self, instance):
         """Midi Play Button"""
         print(instance)
@@ -59,7 +60,6 @@ class PrRoot(BoxLayout):
         else:
             btn.text = 'Play'
             self.midi.stop()
-
     def _play_callback(self, instance, msg, now):
         '''Callback for Play'''
         piano = self.pr_piano_view.pr_piano
@@ -80,23 +80,16 @@ class PrRoot(BoxLayout):
             piano.update_keyoverlay()
         else:
             pass
-
     def _menu_button_test(self, instanace):
         """Test Button"""
         piano = self.pr_piano_view.pr_piano
         roll = self.pr_roll_view.pr_roll
 
-        #piano.pressed_keys = []
-        #piano.update_canvas()
-        #piano.update_groups()
-        #print(piano.keypressed)
-        print(roll.notemap)
-        roll.draw_noteoverlay(midi=self.midi)
-
+        roll.draw_meterbars(midi=self.midi)
+        roll.draw_notes(midi=self.midi)
     def _roll_scroll_sync(self, instance, scroll_y):
         """Sync Scroll between piano and roll views"""
         self.pr_piano_view.scroll_y = scroll_y
-
     def _piano_scroll_sync(self, instance, scroll_y):
         """Sync Scroll between piano and roll views"""
         self.pr_roll_view.scroll_y = scroll_y
@@ -106,7 +99,7 @@ class PrApp(App):
     """Main App"""
     def build(self):
         # window size / position
-        Window.size = (300, 300)
+        Window.size = (1024, 768)
         Window.left, Window.top = 300, 200
 
         # members

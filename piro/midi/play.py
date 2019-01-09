@@ -45,7 +45,7 @@ class PrMidi():
         return None
 
     def get_ppqn(self):
-        """ get ppqn(pulses per quarter not) """
+        """ get ppqn(pulses per quarter note) """
         if self.tempo:
             return self.midi_file.ticks_per_beat
         return None
@@ -61,6 +61,7 @@ class PrMidi():
         ttl = .0
         if self.ppqn:
             for msg in self.midi_file:
+                print(msg, ttl)
                 ttl += msg.time
         return ttl
 
