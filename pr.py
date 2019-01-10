@@ -13,6 +13,7 @@ import piro.widgets as widgets
 
 # piro classes
 from piro.midi.play import PrMidi
+from piro.midi.clock import PrClock
 
 class PrRoot(BoxLayout):
     """Root Widget"""
@@ -25,7 +26,7 @@ class PrRoot(BoxLayout):
 
         # midi
         self.midi = PrMidi(
-            midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
+            midi_filename='.\\midi\\midifiles\\waldstein_1.mid',
             midi_portname='Microsoft GS Wavetable Synth 0')
         self.now = .0
         
@@ -94,16 +95,25 @@ class PrRoot(BoxLayout):
             piano.update_keyoverlay()
         else:
             pass
+            
     def _menu_button_test(self, instanace):
         """Test Button"""
         piano = self.pr_piano_view.pr_piano
         roll = self.pr_roll_view.pr_roll
 
+        prClock = PrClock()
+
+        prClock.set_timer(1)
         roll.draw_meterbars(midi=self.midi)
+        print('draw_meterbars : ', prClock.elapsed(1))
+        prClock.set_timer(1)
         roll.draw_notes(midi=self.midi)
+        print('draw_notes : ', prClock.elapsed(1))
+
     def _roll_scroll_sync(self, instance, scroll_y):
         """Sync Scroll between piano and roll views"""
         self.pr_piano_view.scroll_y = scroll_y
+
     def _piano_scroll_sync(self, instance, scroll_y):
         """Sync Scroll between piano and roll views"""
         self.pr_roll_view.scroll_y = scroll_y

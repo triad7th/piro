@@ -3,6 +3,7 @@ from kivy.graphics import Translate, Rotate, Scale
 from kivy.graphics.instructions import InstructionGroup
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
+from piro.midi.clock import PrClock
 
 class PrRoll(BoxLayout):
     """Roll Drawing"""
@@ -80,13 +81,12 @@ class PrRoll(BoxLayout):
         # update self.midi
         if midi:
             self.midi = midi
-
+        
         # clear meterbars
         self.meterbars['bar'].clear()
-
         # get total length of the song
         if not self.ttl:            
-            self.ttl = midi.get_length()
+            self.ttl = self.midi.length
         # second per quarter note
         spqn = midi.ppqn * midi.spt
         # pixel per second
@@ -94,10 +94,10 @@ class PrRoll(BoxLayout):
             self.pips = self.roll_width / self.ttl
         # pixel per quarter note
         pipqn = spqn * self.pips
-     
+        
         # color pick
         self.meterbars['bar'].add(Color(0.3, 0.3, 0.3, 1))
-
+        
         # meter info
         if not self.meters:
             t = .0
@@ -139,6 +139,7 @@ class PrRoll(BoxLayout):
                         next_meter = None
             
             x += pibar
+
     def draw_notes(self, midi=None):
         """ draw noteoverlay """
         # pass on conditions
@@ -160,26 +161,34 @@ class PrRoll(BoxLayout):
         self.notes['all'].clear()
 
         # get total length of the song
-        ttl = midi.get_length()
+        ttl = self.midi.length
 
         # time(seconds)
         time = .0
         ppt = self.width / ttl
-
+        print(ppt)
         # color pick
         self.notes['all'].add(Color(0.5, 0.5, 0.5, 1))
 
-        for msg in midi.midi_file:
+        clock = PrClock()
+        clock.set_timer(1)
+
+        totalticks = self.midi.get_ticklength()
+        pptick = self.width / totalticks
+
+        clock.set_timer(1)
+        n_obj = 0
+        for msg in midi.midi_file.tracks[1]:
             # time count
             time += msg.time
             if not msg.is_meta:
                 if msg.type == 'note_on':
                     # current x position
-                    x = time * ppt
+                    x = time * pptick
                     # get the note history
                     note_on = note_ons.get(msg.note)
                     if note_on:
-                        if msg.velocity == 0:
+                        if msg.velocity == 0:                            
                             # calculate note info
                             note_off = self.notemap[msg.note]
                             note_off['width'] = x - note_on['x']
@@ -192,6 +201,7 @@ class PrRoll(BoxLayout):
                             self.notes['all'].add(
                                 Rectangle(pos=pos, size=size, group='all')
                             )
+                            n_obj += 1
 
                             # clear note_on
                             note_ons[msg.note] = None
@@ -209,6 +219,8 @@ class PrRoll(BoxLayout):
                             # note_off without note_on
                             # so, do nothing
                             pass
+        print("draw note[mainloop] : ",clock.elapsed(1))
+        print("object# :", n_obj)
 
     # zoom in/out
     def zoom_in(self):        

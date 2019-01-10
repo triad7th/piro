@@ -26,6 +26,7 @@ class PrMidi():
         self.callback_timebar = None
 
         # midi file related
+        self.length = None
         self.tempo = None
         self.bpm = None
         self.ppqn = None
@@ -60,13 +61,21 @@ class PrMidi():
             return mido.tick2second(1, self.ppqn, self.tempo)
         return None
 
+    def get_ticklength(self):
+        """ get number of ticks for the length of the song """
+        totalticks = 0
+        for i, track in enumerate(self.midi_file.tracks):
+            tick = 0
+            for msg in track:
+                tick += msg.time
+            if totalticks < tick:
+                totalticks = tick                
+            print('track {2}: {0} ({1})'.format(track, tick, i))
+        return totalticks
+
     def get_length(self):
         """ get total length of the song """
-        ttl = .0
-        if self.ppqn:
-            for msg in self.midi_file:
-                ttl += msg.time
-        return ttl
+        return self.midi_file.length
 
     def open(self, midi_filename=None, midi_portname=None):
         """ open midifile and(or) port """
@@ -83,6 +92,7 @@ class PrMidi():
             self.next_evt_time = 0
             self.playing = False
             self.msg = None
+            self.length = self.get_length()
 
         if midi_portname:
             self.port = mido.open_output(midi_portname)
@@ -107,6 +117,7 @@ class PrMidi():
             self.next_evt_time = 0
             self.playing = False
             self.msg = None
+            self.length = self.get_length()
             self.clock.set_timer()
             # helper reset
             self.helper.reset()
