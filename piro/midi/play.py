@@ -26,6 +26,7 @@ class PrMidi():
         self.callback_timebar = None
 
         # midi file related
+        self.totalticks = None
         self.length = None
         self.tempo = None
         self.bpm = None
@@ -51,7 +52,7 @@ class PrMidi():
 
     def get_ppqn(self):
         """ get ppqn(pulses per quarter note) """
-        if self.tempo:
+        if self.midi_file:
             return self.midi_file.ticks_per_beat
         return None
 
@@ -61,21 +62,52 @@ class PrMidi():
             return mido.tick2second(1, self.ppqn, self.tempo)
         return None
 
-    def get_ticklength(self):
-        """ get number of ticks for the length of the song """
-        totalticks = 0
-        for i, track in enumerate(self.midi_file.tracks):
-            tick = 0
-            for msg in track:
-                tick += msg.time
-            if totalticks < tick:
-                totalticks = tick                
-            print('track {2}: {0} ({1})'.format(track, tick, i))
-        return totalticks
+    def get_totalticks(self, force=False):
+        """ get total ticks of the song """
+        if force or not self.totalticks:
+            self.get_length(force=True)
+        return self.totalticks
 
-    def get_length(self):
+    def get_length(self, force=False):
         """ get total length of the song """
-        return self.midi_file.length
+        if force or not self.length:
+            """ reset the legnth """
+            tempo = 600000
+            ppqn = self.ppqn
+            spt = tempo / ppqn / 1000000
+
+            totalticks = 0
+
+            # tempo track related
+            tempoticks = 0
+            tempolen = .0
+            lasttempo = 0
+            
+            tempotrack = self.midi_file.tracks[0]
+
+            # find the total tick / length of the tempo track
+            for msg in tempotrack:
+                tempoticks += msg.time
+                tempolen += spt * msg.time
+                if msg.is_meta and msg.type == 'set_tempo':
+                    if tempo != msg.tempo:
+                        tempo = msg.tempo
+                        spt = tempo / ppqn / 1000000
+                        lasttempo = msg.tempo
+            
+            # find the largest ticks in the tracks
+            for track in self.midi_file.tracks:
+                ticks = 0
+                for msg in track:
+                    ticks += msg.time
+                if ticks > totalticks:
+                    totalticks = ticks
+
+            # calculate and set the length
+            self.length = tempolen + mido.tick2second(totalticks-tempoticks, ppqn, lasttempo)
+            self.totalticks = totalticks
+
+        return self.length
 
     def open(self, midi_filename=None, midi_portname=None):
         """ open midifile and(or) port """
@@ -92,7 +124,7 @@ class PrMidi():
             self.next_evt_time = 0
             self.playing = False
             self.msg = None
-            self.length = self.get_length()
+            self.length = self.get_length(force=True)
 
         if midi_portname:
             self.port = mido.open_output(midi_portname)
@@ -117,7 +149,7 @@ class PrMidi():
             self.next_evt_time = 0
             self.playing = False
             self.msg = None
-            self.length = self.get_length()
+            self.length = self.get_length(Force=True)
             self.clock.set_timer()
             # helper reset
             self.helper.reset()
@@ -192,10 +224,11 @@ from kivy.uix.widget import Widget
 from kivy.app import App
 
 if __name__ == '__main__':
+    """
     class PlayApp(App):
         def build(self):
             self.prMidi = prMidi = PrMidi(
-                midi_filename='.\\midi\\midifiles\\fur-elise.mid',
+                midi_filename='.\\midi\\midifiles\\waldstein_1.mid',
                 midi_portname='Microsoft GS Wavetable Synth 0')
     
             prMidi.test()            
@@ -203,4 +236,14 @@ if __name__ == '__main__':
 
             return Widget()
     PlayApp().run()
+    """
+    prMidi = PrMidi(
+        midi_filename='.\\midi\\midifiles\\waldstein_1.mid',
+        midi_portname='Microsoft GS Wavetable Synth 0')
 
+    clock = PrClock()
+
+    clock.set_timer(1)
+    print("length from calculation : ", prMidi.get_length(), "(", clock.elapsed(1),")")
+    clock.set_timer(1)
+    print("length from mido : ", prMidi.midi_file.length, "(", clock.elapsed(1), ")")

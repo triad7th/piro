@@ -26,7 +26,6 @@ class PrRoll(BoxLayout):
         self.scale = None
 
         # meters
-        self.ttl = None
         self.pips = None
         self.meters = None
         self.meter_width = 1
@@ -39,6 +38,7 @@ class PrRoll(BoxLayout):
         self.notes = {'all':InstructionGroup()}
         self.meterbars = {'bar':InstructionGroup()}
         self.timebar = InstructionGroup()
+        self._timebar = Line(points=[0, 0, 0, self.height])
 
         # canvas
         self.draw_canvas()
@@ -64,7 +64,7 @@ class PrRoll(BoxLayout):
             x = time * self.pips
             self.timebar.clear()
             self.timebar.add(
-                Line(points=[x, 0, x, self.height])
+                self._timebar
             )         
 
     def draw_meterbars(self, midi=None):
@@ -84,28 +84,28 @@ class PrRoll(BoxLayout):
         
         # clear meterbars
         self.meterbars['bar'].clear()
+
         # get total length of the song
-        if not self.ttl:            
-            self.ttl = self.midi.length
-        # second per quarter note
-        spqn = midi.ppqn * midi.spt
-        # pixel per second
-        if not self.pips:
-            self.pips = self.roll_width / self.ttl
+        totalticks = self.midi.get_totalticks()
+        # pixel per tick
+        ppt = self.roll_width / totalticks
         # pixel per quarter note
-        pipqn = spqn * self.pips
+        pipqn = midi.ppqn * ppt
+
+        # store pips
+        self.pips = self.roll_width / self.midi.get_length()        
         
         # color pick
         self.meterbars['bar'].add(Color(0.3, 0.3, 0.3, 1))
         
         # meter info
         if not self.meters:
-            t = .0
+            tick = 0
             self.meters = []
             for msg in midi.midi_file.tracks[0]:
-                t += msg.time
+                tick += msg.time
                 if msg.is_meta and msg.type == 'time_signature':
-                    self.meters.append({'tick':t, 'sec':t*midi.spt, 'pixel':t*midi.spt*self.pips, 'msg':msg})
+                    self.meters.append({'tick':tick, 'pixel':tick*ppt, 'msg':msg})
         
         # variables for drawing
         meter_iter = iter(self.meters)
@@ -160,31 +160,21 @@ class PrRoll(BoxLayout):
         # clear note overlay
         self.notes['all'].clear()
 
-        # get total length of the song
-        ttl = self.midi.length
-
-        # time(seconds)
-        time = .0
-        ppt = self.width / ttl
-        print(ppt)
         # color pick
         self.notes['all'].add(Color(0.5, 0.5, 0.5, 1))
 
-        clock = PrClock()
-        clock.set_timer(1)
-
-        totalticks = self.midi.get_ticklength()
+        # tick realted
+        tick = 0
+        totalticks = self.midi.get_totalticks()
         pptick = self.width / totalticks
 
-        clock.set_timer(1)
-        n_obj = 0
         for msg in midi.midi_file.tracks[1]:
             # time count
-            time += msg.time
+            tick += msg.time
             if not msg.is_meta:
                 if msg.type == 'note_on':
                     # current x position
-                    x = time * pptick
+                    x = tick * pptick
                     # get the note history
                     note_on = note_ons.get(msg.note)
                     if note_on:
@@ -201,7 +191,6 @@ class PrRoll(BoxLayout):
                             self.notes['all'].add(
                                 Rectangle(pos=pos, size=size, group='all')
                             )
-                            n_obj += 1
 
                             # clear note_on
                             note_ons[msg.note] = None
@@ -219,8 +208,6 @@ class PrRoll(BoxLayout):
                             # note_off without note_on
                             # so, do nothing
                             pass
-        print("draw note[mainloop] : ",clock.elapsed(1))
-        print("object# :", n_obj)
 
     # zoom in/out
     def zoom_in(self):        
