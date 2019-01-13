@@ -7,10 +7,9 @@ from piro.midi.clock import PrClock
 
 class PrRoll(BoxLayout):
     """Roll Drawing"""
-
     # constants
     _OCTAVES = 11
-    
+
     # init
     def __init__(self, **kwargs):
         # make sure we aren't overriding any important functionality
@@ -21,7 +20,6 @@ class PrRoll(BoxLayout):
 
         # props
         self.size_hint = (None, None)
-        self.roll_width = 1280
         self.size = (1280, 1640)        
         self.scale = None
 
@@ -34,14 +32,24 @@ class PrRoll(BoxLayout):
         self.notemap = []
         self.set_notemap()
 
+        # binds
+        self.bind(size=self.update)
+
         # instruction groups
         self.notes = {'all':InstructionGroup()}
         self.meterbars = {'bar':InstructionGroup()}
         self.timebar = InstructionGroup()
-        self._timebar = Line(points=[0, 0, 0, self.height])
+        self._timebar = None
 
         # canvas
+        self.draw_timebar()
         self.draw_canvas()
+    
+    # callbacks
+    def update(self, instance=None, scroll_x=None):
+        self.pips = self.width / self.midi.get_length()
+
+    # notemap
     def set_notemap(self):
         """ set notemap """
         self.notemap = []
@@ -57,16 +65,21 @@ class PrRoll(BoxLayout):
             })
             pos_y += interval
     
-    # draw modules
-    def draw_timebar(self, time=.0):
+    # set timebar
+    def set_timebar(self, time=.0):
         if self.pips:
-            # draw rectangle
-            x = time * self.pips
-            self.timebar.clear()
-            self.timebar.add(
-                self._timebar
-            )         
+            x = self.pips * time
+            self._timebar.points = [x, 0, x, self.height]
+            return x
+        return None
 
+    # draw modules
+    def draw_timebar(self):
+        # draw line
+        self._timebar = Line(points=[0, 0, 0, self.height])
+
+        # add timebar
+        self.timebar.add(self._timebar)         
     def draw_meterbars(self, midi=None):
         """ draw meterbars """
         # pass on conditions
@@ -88,12 +101,12 @@ class PrRoll(BoxLayout):
         # get total length of the song
         totalticks = self.midi.get_totalticks()
         # pixel per tick
-        ppt = self.roll_width / totalticks
+        ppt = self.width / totalticks
         # pixel per quarter note
         pipqn = midi.ppqn * ppt
 
         # store pips
-        self.pips = self.roll_width / self.midi.get_length()        
+        self.pips = self.width / self.midi.get_length()        
         
         # color pick
         self.meterbars['bar'].add(Color(0.3, 0.3, 0.3, 1))
@@ -120,7 +133,7 @@ class PrRoll(BoxLayout):
             next_meter = None
 
         # main iteration
-        while x <= self.roll_width:
+        while x <= self.width:
             # draw rectangle
             self.meterbars['bar'].add(
                 Line(points=[x, 0, x, self.height], group='bar')
@@ -139,7 +152,6 @@ class PrRoll(BoxLayout):
                         next_meter = None
             
             x += pibar
-
     def draw_notes(self, midi=None):
         """ draw noteoverlay """
         # pass on conditions
@@ -208,16 +220,6 @@ class PrRoll(BoxLayout):
                             # note_off without note_on
                             # so, do nothing
                             pass
-
-    # zoom in/out
-    def zoom_in(self):        
-        self.scale.x *= 1.1
-        # for scrollview effect
-        self.width *= 1.1
-    def zoom_out(self):
-        self.scale.x /= 1.1
-        # for scrollview effect
-        self.width /= 1.1
 
     # draw canvas
     def draw_canvas(self):
@@ -297,7 +299,7 @@ class PrRoll(BoxLayout):
         #
         # timebar
         #
-        self.canvas.add(Color(0.1, 0.1, 0.1, 1))
+        self.canvas.add(Color(1, 0.1, 0.1, 1))
         self.canvas.add(self.timebar)
 
         #
@@ -308,3 +310,14 @@ class PrRoll(BoxLayout):
             PopMatrix()
 
         print("roll:", self.pos, self.size, len(self.canvas.children))
+
+    # zoom in/out/to
+    def zoom_in(self):
+        self.scale.x *= 1.1
+        self.width *= 1.1
+    def zoom_out(self):
+        self.scale.x /= 1.1
+        self.width /= 1.1
+    def zoom_to(self, factor):
+        self.scale.x = factor
+        self.width *= factor

@@ -8,6 +8,8 @@ class PrPiano(BoxLayout):
     """Piano Body Drawing"""
     # constants
     _OCTAVES = 11
+
+    # init
     def __init__(self, **kwargs):
         # make sure we aren't overriding any important functionality
         super(PrPiano, self).__init__(**kwargs)
@@ -47,13 +49,12 @@ class PrPiano(BoxLayout):
     # public methods
     def note(self, note, on):
         self.keypressed[self.keymap[note]] = on
-
     def update_keyoverlay(self):
         self.keyoverlay['ebony'].clear()
         self.keyoverlay['ivory'].clear()
         self.draw_keyoverlay()
-        print("piano : instruction# :", len(self.canvas.children))
-
+    
+    # draw
     def draw_keyoverlay(self):
         self.keyoverlay['ebony'].clear()
         self.keyoverlay['ivory'].clear()
@@ -98,7 +99,6 @@ class PrPiano(BoxLayout):
                     if self.keypressed.get(idx_key, False):
                         self.keyoverlay['ebony'].add(Rectangle(pos=(0, pos_y-6), size=(60, ebony_interval), group='ebony'))
                     idx_key += 1
-
     def draw_canvas(self):
         # clear canvas
         self.canvas.clear()

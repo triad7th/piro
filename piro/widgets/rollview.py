@@ -12,32 +12,34 @@ class PrRollView(ScrollView):
         self.bar_width = 25
         self.scroll_type = ['bars']
 
+        # viewport based on roll size
+        self.local_left = None
+        self.local_right = None
+
         # members
         self.pr_roll = PrRoll()
 
         # binds
-        Window.bind(on_key_up=self._keyup)
-        Window.bind(on_key_down=self._keydown)
+        self.bind(scroll_x=self.update)
+        self.bind(size=self.update)
 
         # child layout
         self.add_widget(self.pr_roll)
 
     # bind callbacks
-    def _keyup(self, *args):        
-        return True
+    def update(self, instance=None, scroll_x=None):
+        self.local_left = self.to_local(self.x, 0)[0]
+        self.local_right = self.to_local(self.width + self.x, 0)[0]
 
-    def _keydown(self, instance, key, keycode, text, modifiers):
-
-        # zoom out
-        if text == 'g':
-            self.pr_roll.zoom_in()
-            print('zoom out', self.width, self.pr_roll.width, self.pr_roll.scale.x)
-
-        # zoom in
-        elif text == 'h':
-            self.pr_roll.zoom_out()
-            print('zoom in', self.width, self.pr_roll.width, self.pr_roll.scale.x)
-
-        return True
-
+    # zoom in/out
+    def zoom_in(self):
+        self.pr_roll.zoom_in()
+        self.update()
+    def zoom_out(self):
+        self.pr_roll.zoom_out()
+        self.update()
+    def zoom_to(self, factor):
+        self.pr_rooll.zoom_to(factor)
+        self.update()
+    
 

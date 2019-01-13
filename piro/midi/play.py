@@ -1,17 +1,20 @@
+#region environment
 import sys
 sys.path.append(".\\")
 
 from kivy.config import Config
 Config.set('kivy', 'kivy_clock', 'free_only')
-
+#endregion
 import mido
 import time
 
+# clocks
 from kivy.clock import Clock
 from piro.midi.clock import PrClock, PrHelper
 
 class PrMidi():
     """ play midi file(s) with callback support """
+    # init
     def __init__(self, midi_filename=None, midi_portname=None):
         """ init """
         # main members
@@ -42,32 +45,82 @@ class PrMidi():
         # actual init
         self.open(midi_filename, midi_portname)
     
+    # midifile open/reload
+    def open(self, midi_filename=None, midi_portname=None):
+        """ open midifile and(or) port """
+        if midi_filename:
+            clock = PrClock()
+            clock.set_timer(1)
+            # load midi file
+            self.midi_file = mido.MidiFile(midi_filename)
+            print("open midifile : ", clock.elapsed(1))            
+            # load iteration of it
+            self.midi_iter = iter(self.midi_file)
+            # set relative variables
+            clock.set_timer(1)
+            self.tempo = self.get_tempo()
+            print('get tempo : ', clock.elapsed(1))
+            self.bpm = mido.tempo2bpm(self.tempo)
+            self.ppqn = self.get_ppqn()
+            self.spt = self.get_spt()
+            self.next_evt_time = 0
+            self.playing = False
+            self.msg = None
+            clock.set_timer(1)
+            self.length = self.get_length(force=True)
+            print('get length : ', clock.elapsed(1))
+
+        if midi_portname:
+            self.port = mido.open_output(midi_portname)
+    def reload(self):
+        """ reload midi file """
+        # stop if it's needed
+        self.stop()
+
+        # reload
+        if self.midi_file and self.port:
+            # reset port
+            self.port.reset()
+            # reset iteration of midi file
+            del self.midi_iter
+            self.midi_iter = iter(self.midi_file)
+            # set relative variables
+            self.tempo = self.get_tempo()
+            self.bpm = mido.tempo2bpm(self.tempo)
+            self.ppqn = self.get_ppqn()
+            self.spt = self.get_spt()
+            self.next_evt_time = 0
+            self.playing = False
+            self.msg = None
+            self.length = self.get_length(force=True)
+            self.clock.set_timer()
+            # helper reset
+            self.helper.reset()
+
+    # get props
     def get_tempo(self):
         """ get tempo """
         if self.midi_file:
-            for msg in self.midi_file:
+            tempotrack = self.midi_file.tracks[0]
+            for msg in tempotrack:
                 if msg.is_meta and msg.type=='set_tempo':
                     return msg.tempo
         return None
-
     def get_ppqn(self):
         """ get ppqn(pulses per quarter note) """
         if self.midi_file:
             return self.midi_file.ticks_per_beat
         return None
-
     def get_spt(self):
         """ get second per tick """
         if self.ppqn:
             return mido.tick2second(1, self.ppqn, self.tempo)
         return None
-
     def get_totalticks(self, force=False):
         """ get total ticks of the song """
         if force or not self.totalticks:
             self.get_length(force=True)
         return self.totalticks
-
     def get_length(self, force=False):
         """ get total length of the song """
         if force or not self.length:
@@ -108,52 +161,8 @@ class PrMidi():
             self.totalticks = totalticks
 
         return self.length
-
-    def open(self, midi_filename=None, midi_portname=None):
-        """ open midifile and(or) port """
-        if midi_filename:
-            # load midi file
-            self.midi_file = mido.MidiFile(midi_filename)
-            # load iteration of it
-            self.midi_iter = iter(self.midi_file)
-            # set relative variables
-            self.tempo = self.get_tempo()
-            self.bpm = mido.tempo2bpm(self.tempo)
-            self.ppqn = self.get_ppqn()
-            self.spt = self.get_spt()
-            self.next_evt_time = 0
-            self.playing = False
-            self.msg = None
-            self.length = self.get_length(force=True)
-
-        if midi_portname:
-            self.port = mido.open_output(midi_portname)
-
-    def reload(self):
-        """ reload midi file """
-        # stop if it's needed
-        self.stop()
-
-        # reload
-        if self.midi_file and self.port:
-            # reset port
-            self.port.reset()
-            # reset iteration of midi file
-            del self.midi_iter
-            self.midi_iter = iter(self.midi_file)
-            # set relative variables
-            self.tempo = self.get_tempo()
-            self.bpm = mido.tempo2bpm(self.tempo)
-            self.ppqn = self.get_ppqn()
-            self.spt = self.get_spt()
-            self.next_evt_time = 0
-            self.playing = False
-            self.msg = None
-            self.length = self.get_length(Force=True)
-            self.clock.set_timer()
-            # helper reset
-            self.helper.reset()
-
+    
+    # midifile trigger/play/stop
     def trigger(self, msg=None, callback=None, callback_timebar=None):
         """ trigger midifile play """
         if not self.playing:
@@ -174,26 +183,6 @@ class PrMidi():
 
                 # trigger!
                 self._scheduled_evt = Clock.schedule_interval_free(self.playback, self.spt)
-
-    def play(self, msg, now=0):
-        """ send one event message """
-        if msg.is_meta:
-            pass
-            #self.helper.log(now, msg)
-        else:
-            self.port.send(msg)
-            #self.helper.log(now, msg)
-
-    def stop(self):
-        """ stop the current playback """
-        if self.playing:
-            # clear flag
-            self.playing = False
-            # reset port
-            self.port.reset()
-            # unschedule the callback
-            self._scheduled_evt.cancel()
-
     def playback(self, now=0):
         """ callback for midifile play """
         if self.playing:
@@ -216,15 +205,28 @@ class PrMidi():
                     self.stop()
                 else:
                     self.next_evt_time += self.msg.time
-
-    def test(self):
-        print(self.tempo, self.bpm, self.ppqn, self.spt)
-
-from kivy.uix.widget import Widget
-from kivy.app import App
+    def stop(self):
+        """ stop the current playback """
+        if self.playing:
+            # clear flag
+            self.playing = False
+            # reset port
+            self.port.reset()
+            # unschedule the callback
+            self._scheduled_evt.cancel()
+    def play(self, msg, now=0):
+        """ send one event message """
+        if msg.is_meta:
+            pass
+            #self.helper.log(now, msg)
+        else:
+            self.port.send(msg)
+            #self.helper.log(now, msg)
 
 if __name__ == '__main__':
     """
+    from kivy.uix.widget import Widget
+    from kivy.app import App
     class PlayApp(App):
         def build(self):
             self.prMidi = prMidi = PrMidi(
