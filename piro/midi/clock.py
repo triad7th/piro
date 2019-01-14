@@ -22,7 +22,7 @@ class PrClock():
     def add_timer(self):
         self._begin.append(time.time())   
         self._first.append(True) 
-
+       
     def elapsed(self, n=0, begin_with_this=False):
         # current time
         cur_time = time.time()

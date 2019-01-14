@@ -1,5 +1,6 @@
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
+from kivy.clock import Clock
 from piro.widgets.roll import PrRoll
 
 class PrRollView(ScrollView):
@@ -19,27 +20,32 @@ class PrRollView(ScrollView):
         # members
         self.pr_roll = PrRoll()
 
-        # binds
-        self.bind(scroll_x=self.update)
-        self.bind(size=self.update)
-
         # child layout
         self.add_widget(self.pr_roll)
 
     # bind callbacks
-    def update(self, instance=None, scroll_x=None):
+    def update(self, instance=None):
+        print('left/right update!')
         self.local_left = self.to_local(self.x, 0)[0]
         self.local_right = self.to_local(self.width + self.x, 0)[0]
+        self.show()
+
+    # show local left/right
+    def show(self):
+        print('local left/right/width/bar_x : '
+            ,self.local_left, '/', self.local_right, '/'
+            ,self.pr_roll.width, '/', self.parent.parent.bar_x)
 
     # zoom in/out
     def zoom_in(self):
+        print('zoom in!')
         self.pr_roll.zoom_in()
-        self.update()
+        Clock.schedule_once(self.update, 0)
     def zoom_out(self):
+        print('zoom out!')
         self.pr_roll.zoom_out()
-        self.update()
+        Clock.schedule_once(self.update, 0)
     def zoom_to(self, factor):
         self.pr_rooll.zoom_to(factor)
-        self.update()
-    
+        Clock.schedule_once(self.update, 0)
 

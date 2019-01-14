@@ -29,6 +29,7 @@ class PrRoot(BoxLayout):
             midi_portname='Microsoft GS Wavetable Synth 0')
         self.orientation = 'vertical'
         self.now = .0
+        self.bar_x = .0
 
         # widgets factory / bind
         self.widget_factory()
@@ -72,6 +73,7 @@ class PrRoot(BoxLayout):
         # bind - piano/roll y sync
         self.pr_roll_view.bind(scroll_y=self._roll_scroll_sync)
         self.pr_piano_view.bind(scroll_y=self._piano_scroll_sync)
+        self.pr_roll_view.bind(scroll_x=self._scroll_x)
 
         # bind - buttons
         self.pr_menu.btn_play.bind(on_press=self._menu_button_play)
@@ -92,16 +94,19 @@ class PrRoot(BoxLayout):
 
         # init scrollview
         rollview.update()
-        print(rollview.local_left, rollview.local_right)
+
+    # callback - scroll_x
+    def _scroll_x(self, instance, scroll_x):
+        pass
 
     # callback - buttons
     def _menu_button_play(self, instance):
-        """Midi Play Button"""
-        print(instance)
+        """Midi Play Button"""        
+        print(instance.text,"!")
         btn = instance
         if btn.text == 'Play':
             btn.text = 'Stop'
-            self.midi.reload()
+            #self.midi.reload()
             self.midi.trigger(
                 callback=self._play_callback,
                 callback_timebar=self._play_callback_timebar
@@ -109,8 +114,8 @@ class PrRoot(BoxLayout):
         else:
             btn.text = 'Play'
             self.midi.stop()
-            self.now = .0
-    def _menu_button_test(self, instanace):
+            #self.now = .0     
+    def _menu_button_test(self, instance):
         """Test Button"""
         pass
 
@@ -122,14 +127,19 @@ class PrRoot(BoxLayout):
 
         if now - self.now > 0.025:
             self.now = now
-
-            bar_x = roll.set_timebar(now)
             
+            self.bar_x = bar_x = roll.set_timebar(now)
+           
             if view.local_right < bar_x:
+                print('auto scroll_x before : ',view.local_right, bar_x)
                 scroll_width = roll.width - view.width
                 view.scroll_x = bar_x / scroll_width
+                view.update_from_scroll()
+                view.update()
+                print('auto scroll_x after : ',view.local_right, bar_x)
             else:
-                print(view.local_right, bar_x)
+                pass
+                #print(view.local_right, bar_x)
     def _play_callback(self, instance, msg, now):
         '''Callback for Play'''
         pno = self.pr_piano_view.pr_piano
@@ -171,6 +181,16 @@ class PrRoot(BoxLayout):
         # play
         elif text == ' ':
             self._menu_button_play(self.pr_menu.btn_play)
+        # reload
+        elif text == 'w':
+            view = self.pr_roll_view
+            roll = view.pr_roll
+            self.midi.rewind()
+            self.now=.0
+            roll.set_timebar(self.now)
+            view.scroll_x = 0
+            view.update_from_scroll()
+            view.update()
         return True
 
 class PrApp(App):
@@ -192,6 +212,7 @@ class PrApp(App):
     # bind callbacks
     def _update_size(self, instance, value):
         print("instance size:",instance.size)
+        self.pr_root.pr_roll_view.show()
 
 if __name__ == '__main__':
     PrApp().run()

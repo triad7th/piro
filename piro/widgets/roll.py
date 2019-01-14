@@ -20,6 +20,7 @@ class PrRoll(BoxLayout):
 
         # props
         self.size_hint = (None, None)
+        self.abs_width = 1280
         self.size = (1280, 1640)        
         self.scale = None
 
@@ -32,9 +33,6 @@ class PrRoll(BoxLayout):
         self.notemap = []
         self.set_notemap()
 
-        # binds
-        self.bind(size=self.update)
-
         # instruction groups
         self.notes = {'all':InstructionGroup()}
         self.meterbars = {'bar':InstructionGroup()}
@@ -45,10 +43,6 @@ class PrRoll(BoxLayout):
         self.draw_timebar()
         self.draw_canvas()
     
-    # callbacks
-    def update(self, instance=None, scroll_x=None):
-        self.pips = self.width / self.midi.get_length()
-
     # notemap
     def set_notemap(self):
         """ set notemap """
@@ -70,7 +64,7 @@ class PrRoll(BoxLayout):
         if self.pips:
             x = self.pips * time
             self._timebar.points = [x, 0, x, self.height]
-            return x
+            return x * self.scale.x
         return None
 
     # draw modules
@@ -106,7 +100,7 @@ class PrRoll(BoxLayout):
         pipqn = midi.ppqn * ppt
 
         # store pips
-        self.pips = self.width / self.midi.get_length()        
+        self.pips = self.abs_width / self.midi.get_length()        
         
         # color pick
         self.meterbars['bar'].add(Color(0.3, 0.3, 0.3, 1))

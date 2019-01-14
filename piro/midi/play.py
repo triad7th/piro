@@ -37,6 +37,7 @@ class PrMidi():
         self.spt = None
         self.msg = None
         self.next_evt_time = 0
+        self.start_time = .0
 
         # clock and helper classes
         self.clock = PrClock()
@@ -68,6 +69,7 @@ class PrMidi():
             self.msg = None
             clock.set_timer(1)
             self.length = self.get_length(force=True)
+            self.start_time = .0
             print('get length : ', clock.elapsed(1))
 
         if midi_portname:
@@ -94,6 +96,7 @@ class PrMidi():
             self.msg = None
             self.length = self.get_length(force=True)
             self.clock.set_timer()
+            self.start_time = .0
             # helper reset
             self.helper.reset()
 
@@ -175,7 +178,8 @@ class PrMidi():
                 pass
             else:
                 # set the next event time
-                self.next_evt_time = msg.time
+                self.next_evt_time += msg.time
+                print('start time :', self.start_time, self.next_evt_time)
 
                 # set the callback
                 self.callback = callback
@@ -187,7 +191,7 @@ class PrMidi():
         """ callback for midifile play """
         if self.playing:
             # get now
-            now = self.clock.elapsed(begin_with_this=True)
+            now = self.clock.elapsed(begin_with_this=True) + self.start_time
             # timbar callback
             if self.callback_timebar:
                 self.callback_timebar(self, now)       
@@ -208,12 +212,35 @@ class PrMidi():
     def stop(self):
         """ stop the current playback """
         if self.playing:
+            # write the start time for next trigger
+            self.start_time += self.clock.elapsed(begin_with_this=True)
+            print('start time :', self.start_time, self.next_evt_time)
             # clear flag
             self.playing = False
             # reset port
             self.port.reset()
             # unschedule the callback
             self._scheduled_evt.cancel()
+            # clock reset
+            self.clock.set_timer()
+    def rewind(self):
+        """ rewind to zero """
+        # backup playing status
+        playing = self.playing
+
+        # stop playing temporarily
+        self.playing = False
+        
+        # clock reset
+        self.port.reset()
+        self.clock.set_timer()
+        self.start_time = .0
+        self.next_evt_time = .0
+        del self.midi_iter
+        self.midi_iter = iter(self.midi_file)
+
+        # recover playing status
+        self.playing = playing
     def play(self, msg, now=0):
         """ send one event message """
         if msg.is_meta:
