@@ -12,8 +12,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 
 # piro modules
-#import piro.widgets as widgets
-from piro import widgets
+import piro.widgets as widgets
 
 # piro classes
 from piro.midi.play import PrMidi
