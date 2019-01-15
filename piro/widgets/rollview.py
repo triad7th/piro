@@ -16,6 +16,7 @@ class PrRollView(ScrollView):
         # viewport based on roll size
         self.local_left = None
         self.local_right = None
+        self.scroll_width = None
 
         # members
         self.pr_roll = PrRoll()
@@ -25,9 +26,23 @@ class PrRollView(ScrollView):
 
     # bind callbacks
     def update(self, instance=None):
-        print('left/right update!')
+        """Update local_left/right, scroll_width
+
+        [Used by]
+            PrRoll
+                .focus
+                .zoom_in
+                .zoom_out
+                .zoom_to
+
+            PrRoot
+                .draw_roll
+                ._scroll_stop
+                ._keydown - g/h/w/play/c
+        """
         self.local_left = self.to_local(self.x, 0)[0]
         self.local_right = self.to_local(self.width + self.x, 0)[0]
+        self.scroll_width = self.pr_roll.width - self.width
         self.show()
 
     # show local left/right
@@ -35,6 +50,16 @@ class PrRollView(ScrollView):
         print('local left/right/width/bar_x : '
             ,self.local_left, '/', self.local_right, '/'
             ,self.pr_roll.width, '/', self.parent.parent.bar_x)
+
+    # focus
+    def focus(self, x):
+        """Scroll to the x"""
+        if self.local_left <= x and x <= self.local_right:
+            pass
+        else:
+            self.scroll_x = x / self.scroll_width          
+            self.update_from_scroll()
+            self.update()
 
     # zoom in/out
     def zoom_in(self):

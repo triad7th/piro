@@ -64,6 +64,10 @@ class PrRoll(BoxLayout):
             self._timebar.points = [x, 0, x, self.height]
             return x * self.scale.x
         return None
+    def get_timebar(self, time=.0):
+        if self.pips:
+            return self.pips * time * self.scale.x
+        return None
 
     # draw modules
     def draw_timebar(self):

@@ -77,7 +77,7 @@ class PrRoot(BoxLayout):
         self.pr_piano_view.bind(scroll_y=self._piano_scroll_sync)
 
         # bind - scroll_x
-        self.pr_roll_view.bind(scroll_x=self._scroll_x)
+        self.pr_roll_view.bind(on_scroll_stop=self._scroll_stop)
 
         # bind - buttons
         self.pr_menu.btn_play.bind(on_press=self._menu_button_play)
@@ -99,9 +99,10 @@ class PrRoot(BoxLayout):
         # init scrollview
         rollview.update()
 
-    # callback - scroll_x
-    def _scroll_x(self, instance, scroll_x):
-        pass
+    # callback - scroll_stop
+    def _scroll_stop(self, instance, scroll_x):
+        print('scroll stop')
+        self.pr_roll_view.update()
 
     # callback - buttons
     def _menu_button_play(self, instance):
@@ -118,7 +119,6 @@ class PrRoot(BoxLayout):
         else:
             btn.text = 'Play'
             self.midi.stop()
-            #self.now = .0     
     def _menu_button_test(self, instance):
         """Test Button"""
         pass
@@ -130,20 +130,9 @@ class PrRoot(BoxLayout):
         roll = view.pr_roll
 
         if now - self.now > 0.025:
-            self.now = now
-            
-            self.bar_x = bar_x = roll.set_timebar(now)
-           
-            if view.local_right < bar_x:
-                print('auto scroll_x before : ',view.local_right, bar_x)
-                scroll_width = roll.width - view.width
-                view.scroll_x = bar_x / scroll_width
-                view.update_from_scroll()
-                view.update()
-                print('auto scroll_x after : ',view.local_right, bar_x)
-            else:
-                pass
-                #print(view.local_right, bar_x)
+            self.now = now            
+            self.bar_x = roll.set_timebar(now)
+            view.focus(self.bar_x)
     def _play_callback(self, instance, msg, now):
         '''Callback for Play'''
         pno = self.pr_piano_view.pr_piano
@@ -176,24 +165,29 @@ class PrRoot(BoxLayout):
         return True
     def _keydown(self, instance, key, keycode, text, modifiers):
         """Callback for KeyDown"""
+        view = self.pr_roll_view
+        roll = view.pr_roll
         # zoom out
         if text == 'g':
-            self.pr_roll_view.zoom_in()
+            view.zoom_in()
         # zoom in
         elif text == 'h':
-            self.pr_roll_view.zoom_out()
+            view.zoom_out()
         # play
         elif text == ' ':
             self._menu_button_play(self.pr_menu.btn_play)
+            view.update()
         # reload
-        elif text == 'w':
-            view = self.pr_roll_view
-            roll = view.pr_roll
+        elif text == 'w':            
             self.midi.rewind()
             self.now=.0
             roll.set_timebar(self.now)
             view.scroll_x = 0
             view.update_from_scroll()
+            view.update()
+        # check
+        elif text == 'c':
+            view = self.pr_roll_view
             view.update()
         return True
 

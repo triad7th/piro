@@ -179,7 +179,6 @@ class PrMidi():
             else:
                 # set the next event time
                 self.next_evt_time += msg.time
-                print('start time :', self.start_time, self.next_evt_time)
 
                 # set the callback
                 self.callback = callback
