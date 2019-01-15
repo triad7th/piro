@@ -3,12 +3,10 @@ from kivy.graphics.instructions import InstructionGroup
 from kivy.core.text import Label as CoreLabel
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
+from piro.env import PrEnv as Env
 
 class PrPiano(BoxLayout):
     """Piano Body Drawing"""
-    # constants
-    _OCTAVES = 11
-
     # init
     def __init__(self, **kwargs):
         # make sure we aren't overriding any important functionality
@@ -33,10 +31,10 @@ class PrPiano(BoxLayout):
     def _set_keymap(self):
         # set reverse keymap
         rev_keymap = []
-        for octave in range(self._OCTAVES):
+        for octave in range(Env.MAX_OCTAVES):
             for ivory in [0, 2, 4, 5, 7, 9, 11]:
                 rev_keymap.append(octave*12+ivory)
-        for octave in range(self._OCTAVES):
+        for octave in range(Env.MAX_OCTAVES):
             for ebony in [1, 3, 6, 8, 10]:
                 rev_keymap.append(octave*12+ebony)
         
@@ -72,7 +70,7 @@ class PrPiano(BoxLayout):
         pos_y = 1
         idx_key = 0
         # iteration for octave
-        for i in range(self._OCTAVES):
+        for i in range(Env.MAX_OCTAVES):
             # position for the octave start
             pos_octave.append(pos_y)
             for interval in ivory_intervals:
@@ -92,7 +90,7 @@ class PrPiano(BoxLayout):
         # y position
         pos_y = 1
         # iteration for octave
-        for i in range(self._OCTAVES):
+        for i in range(Env.MAX_OCTAVES):
             for idx, interval in enumerate(ivory_intervals):
                 pos_y += interval + 1
                 if idx not in [2, 6]:
@@ -124,7 +122,7 @@ class PrPiano(BoxLayout):
         pos_y = 1
         idx_key = 0
         # iteration for octave
-        for i in range(self._OCTAVES):
+        for i in range(Env.MAX_OCTAVES):
             # position for the octave start
             pos_octave.append(pos_y)
             for interval in ivory_intervals:
@@ -151,7 +149,7 @@ class PrPiano(BoxLayout):
         # y position
         pos_y = 1
         # iteration for octave
-        for i in range(self._OCTAVES):
+        for i in range(Env.MAX_OCTAVES):
             for idx, interval in enumerate(ivory_intervals):
                 pos_y += interval + 1
                 if idx not in [2, 6]:

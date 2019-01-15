@@ -4,12 +4,10 @@ from kivy.graphics.instructions import InstructionGroup
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
 from piro.midi.clock import PrClock
+from piro.env import PrEnv as Env
 
 class PrRoll(BoxLayout):
     """Roll Drawing"""
-    # constants
-    _OCTAVES = 11
-
     # init
     def __init__(self, **kwargs):
         # make sure we aren't overriding any important functionality
@@ -252,7 +250,7 @@ class PrRoll(BoxLayout):
         # y position
         pos_y, key_height = (0, 12)
         # nine octaves
-        for i in range(self._OCTAVES):
+        for i in range(Env.MAX_OCTAVES):
             #pos_y -= 1        
             # iteration for octave
             for interval in ivory_intervals:
@@ -271,7 +269,7 @@ class PrRoll(BoxLayout):
         # y position
         pos_y, key_height = (0, 12)
         # nine octaves
-        for i in range(self._OCTAVES):
+        for i in range(Env.MAX_OCTAVES):
             #pos_y -= 1
             # iteration for octave
             for idx, interval in enumerate(ivory_intervals):
