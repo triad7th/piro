@@ -10,7 +10,8 @@ import time
 
 # clocks
 from kivy.clock import Clock
-from piro.midi.clock import PrClock, PrHelper
+from piro.midi.clock import PrClock
+from prio.midi.helper import PrHelper
 
 class PrMidi():
     """ play midi file(s) with callback support """
