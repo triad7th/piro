@@ -30,6 +30,12 @@ class PrHelper():
             )
         else:
             return msg
+    @staticmethod
+    def msg(a, b, c=None):
+        if c:
+            print('[{0:10}] [{1:20}] {2}'.format(a, b, c))
+        else:
+            print('[{0:10}] {1}'.format(a, b))
     def log(self, elapsed, msg):
         self._midi_sum += msg.time
 

@@ -17,6 +17,7 @@ import piro.widgets as widgets
 # piro classes
 from piro.midi.play import PrMidi
 from piro.midi.clock import PrClock
+from piro.midi.helper import PrHelper
 
 class PrRoot(BoxLayout):
     """Root Widget"""
@@ -77,7 +78,7 @@ class PrRoot(BoxLayout):
         self.pr_piano_view.bind(scroll_y=self._piano_scroll_sync)
 
         # bind - scroll_x
-        self.pr_roll_view.bind(on_scroll_stop=self._scroll_stop)
+        self.pr_roll_view.bind(on_scroll_start=self._scroll_start)
 
         # bind - buttons
         self.pr_menu.btn_play.bind(on_press=self._menu_button_play)
@@ -95,23 +96,19 @@ class PrRoot(BoxLayout):
         if rollview.height < roll.height:
             rollview.scroll_y = ( (roll.height - rollview.height) / 2 ) / rollview.height
         rollview.update_from_scroll()
-
-        # init scrollview
-        rollview.update()
+        
 
     # callback - scroll_stop
-    def _scroll_stop(self, instance, scroll_x):
-        print('scroll stop')
-        self.pr_roll_view.update()
+    def _scroll_start(self, instance, scroll_y):
+        pass
 
     # callback - buttons
     def _menu_button_play(self, instance):
         """Midi Play Button"""        
-        print(instance.text,"!")
+        #PrHelper.msg('PrRoot', instance.text)
         btn = instance
         if btn.text == 'Play':
             btn.text = 'Stop'
-            #self.midi.reload()
             self.midi.trigger(
                 callback=self._play_callback,
                 callback_timebar=self._play_callback_timebar
@@ -176,7 +173,6 @@ class PrRoot(BoxLayout):
         # play
         elif text == ' ':
             self._menu_button_play(self.pr_menu.btn_play)
-            view.update()
         # reload
         elif text == 'w':            
             self.midi.rewind()
@@ -184,11 +180,11 @@ class PrRoot(BoxLayout):
             roll.set_timebar(self.now)
             view.scroll_x = 0
             view.update_from_scroll()
-            view.update()
         # check
         elif text == 'c':
             view = self.pr_roll_view
-            view.update()
+            PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)
+            view.show()
         return True
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ import time
 # clocks
 from kivy.clock import Clock
 from piro.midi.clock import PrClock
-from prio.midi.helper import PrHelper
+from piro.midi.helper import PrHelper
 
 class PrMidi():
     """ play midi file(s) with callback support """
@@ -172,6 +172,7 @@ class PrMidi():
         if not self.playing:
             # set flag
             self.playing = True
+            PrHelper.msg('PrMidi', 'Played at', '{0:10.4f} sec'.format(self.start_time))
 
             try:
                 self.msg = msg = next(self.midi_iter)
@@ -214,7 +215,7 @@ class PrMidi():
         if self.playing:
             # write the start time for next trigger
             self.start_time += self.clock.elapsed(begin_with_this=True)
-            print('start time :', self.start_time, self.next_evt_time)
+            PrHelper.msg('PrMidi', 'Stopped at', '{0:10.4f} sec'.format(self.start_time))
             # clear flag
             self.playing = False
             # reset port
