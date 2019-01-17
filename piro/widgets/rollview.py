@@ -1,6 +1,7 @@
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
 from kivy.clock import Clock
+from kivy.effects.scroll import ScrollEffect
 from piro.widgets.roll import PrRoll
 
 class PrRollView(ScrollView):
@@ -12,6 +13,8 @@ class PrRollView(ScrollView):
         # props
         self.bar_width = 25
         self.scroll_type = ['bars']
+        # No Effect for Scroll - kivy's scroll effect is buggy. I won't use it!
+        self.effect_cls = ScrollEffect
 
         # members
         self.pr_roll = PrRoll()

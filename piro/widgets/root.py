@@ -18,6 +18,7 @@ import piro.widgets as widgets
 from piro.midi.play import PrMidi
 from piro.midi.clock import PrClock
 from piro.midi.helper import PrHelper
+from piro.env import PrEnv
 
 class PrRoot(BoxLayout):
     """Root Widget"""
@@ -94,9 +95,11 @@ class PrRoot(BoxLayout):
 
         # adjust y scroll
         if rollview.height < roll.height:
-            rollview.scroll_y = ( (roll.height - rollview.height) / 2 ) / rollview.height
-        rollview.update_from_scroll()
+            rollview.scroll_y = ( ( roll.height - rollview.height ) / 2 ) / rollview.height
         
+        # adjust zoom factor
+        pipqn = self.midi.ppqn * ( roll.width / self.midi.totalticks )
+        roll.zoom_to( PrEnv.PIPQN / pipqn )
 
     # callback - scroll_stop
     def _scroll_start(self, instance, scroll_y):
