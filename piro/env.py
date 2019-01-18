@@ -6,3 +6,8 @@ class PrEnv():
 
     # Pixel Per Quarter Note(PIPQN) for the initial zoom_to
     PIPQN = 200
+
+    # Color Pallette
+    IVORY_COLOR = [1, 1, 1, 1.0]
+    EBONY_COLOR = [0, 0, 0, 1.0]
+    PRESSED_COLOR = [1, 0, 0, 1.0]

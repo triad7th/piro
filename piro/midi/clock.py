@@ -1,4 +1,14 @@
+#region environment
+import sys
+sys.path.append(".\\")
+# Import kivy config class
+from kivy.config import Config
+# setup kivy clock as 'free_only'
+Config.set('kivy', 'kivy_clock', 'free_only')
+#endregion
 import time
+from kivy.clock import Clock
+
 
 class PrClock():
     def __init__(self, **kwargs):
@@ -37,7 +47,12 @@ class PrClock():
             self._begin[n] = cur_time
 
         return cur_time - self._begin[n]
-
+    @staticmethod
+    def schedule_once(func, time):
+        return Clock.schedule_once(func, time)
+    @staticmethod
+    def schedule_interval_free(func, time):
+        return Clock.schedule_interval_free(func, time)
 
 if __name__ == '__main__':
     import random

@@ -1,15 +1,11 @@
 #region environment
 import sys
 sys.path.append(".\\")
-
-from kivy.config import Config
-Config.set('kivy', 'kivy_clock', 'free_only')
 #endregion
 import mido
 import time
 
 # clocks
-from kivy.clock import Clock
 from piro.midi.clock import PrClock
 from piro.midi.helper import PrHelper
 
@@ -187,7 +183,7 @@ class PrMidi():
                 self.callback_timebar = callback_timebar
 
                 # trigger!
-                self._scheduled_evt = Clock.schedule_interval_free(self.playback, self.spt)
+                self._scheduled_evt = PrClock.schedule_interval_free(self.playback, self.spt)
     def playback(self, now=0):
         """ callback for midifile play """
         if self.playing:
