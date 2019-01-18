@@ -39,13 +39,20 @@ class PrRoot(BoxLayout):
         self.widget_add()
         self.widget_bind()
 
+        # widget shorthands
+        self.pno = self.pr_piano_view.pr_piano
+        self.roll = self.pr_roll_view.pr_roll
+        self.rollview = self.pr_roll_view
+        self.pianoview = self.pr_piano_view
+
         # bind - keystrokes
         Window.bind(on_key_up=self._keyup)
         Window.bind(on_key_down=self._keydown)        
 
         # draw roll
         Clock.schedule_once(self.draw_roll, 0)
-   
+
+
     # widget factory / bind / draw
     def widget_add(self):
         """        
@@ -86,8 +93,8 @@ class PrRoot(BoxLayout):
         self.pr_menu.btn_test.bind(on_press=self._menu_button_test)
     def draw_roll(self, instance):
         # widgets
-        rollview = self.pr_roll_view
-        roll = rollview.pr_roll
+        rollview = self.rollview
+        roll = self.roll
 
         # draw meterbars / notes
         roll.draw_meterbars(midi=self.midi)
@@ -119,6 +126,7 @@ class PrRoot(BoxLayout):
         else:
             btn.text = 'Play'
             self.midi.stop()
+            self.pno.stop()
     def _menu_button_test(self, instance):
         """Test Button"""
         pass
@@ -126,38 +134,21 @@ class PrRoot(BoxLayout):
     # callback - midi play
     def _play_callback_timebar(self, instance, now):
         """Callback for Timebar - !!! frequent calls !!!"""
-        view = self.pr_roll_view
-        roll = view.pr_roll
-
         if now - self.now > 0.025:
             self.now = now            
-            self.bar_x = roll.set_timebar(now)
-            view.focus(self.bar_x)
+            self.bar_x = self.roll.set_timebar(now)
+            self.rollview.focus(self.bar_x)
     def _play_callback(self, instance, msg, now):
         '''Callback for Play'''
-        pno = self.pr_piano_view.pr_piano
-
-        # draw note_on/off status
-        if msg.type == 'note_on':
-            if msg.velocity == 0:
-                pno.note(msg.note, on=False)
-                pno.update_keyoverlay()
-            else:
-                pno.note(msg.note, on=True)
-                pno.update_keyoverlay()
-        elif msg.type == 'note_off':
-            pno.note(msg.note, on=False)
-            pno.update_keyoverlay()
-        else:
-            pass        
+        self.pno.play(msg)      
 
     # callback - piano/roll y sync
     def _roll_scroll_sync(self, instance, scroll_y):
         """Sync Scroll between piano and roll views"""
-        self.pr_piano_view.scroll_y = scroll_y
+        self.pianoview.scroll_y = scroll_y
     def _piano_scroll_sync(self, instance, scroll_y):
         """Sync Scroll between piano and roll views"""
-        self.pr_roll_view.scroll_y = scroll_y
+        self.rollview.scroll_y = scroll_y
 
     # callback - keystrokes
     def _keyup(self, *args):        
@@ -165,8 +156,8 @@ class PrRoot(BoxLayout):
         return True
     def _keydown(self, instance, key, keycode, text, modifiers):
         """Callback for KeyDown"""
-        view = self.pr_roll_view
-        roll = view.pr_roll
+        view = self.rollview
+        roll = self.roll
         # zoom out
         if text == 'g':
             view.zoom_in()
@@ -180,12 +171,9 @@ class PrRoot(BoxLayout):
         elif text == 'w':            
             self.midi.rewind()
             self.now=.0
-            roll.set_timebar(self.now)
-            view.scroll_x = 0
-            view.update_from_scroll()
+            view.focus(roll.set_timebar(self.now))
         # check
         elif text == 'c':
-            view = self.pr_roll_view
             PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)
             view.show()
         return True

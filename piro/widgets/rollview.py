@@ -3,6 +3,7 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.effects.scroll import ScrollEffect
 from piro.widgets.roll import PrRoll
+from piro.midi.helper import PrHelper
 
 class PrRollView(ScrollView):
     """Roll ScrollView, Accepts Key Up/Dn"""
@@ -31,6 +32,9 @@ class PrRollView(ScrollView):
     @property
     def scroll_width(self):
         return self.pr_roll.width - self.width
+    @property
+    def scale(self):
+        return self.pr_roll.scale
 
     # bind callbacks
     def update(self, instance=None):

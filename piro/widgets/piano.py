@@ -1,3 +1,11 @@
+#region environment
+import sys
+sys.path.append(".\\")
+# Import kivy config class
+from kivy.config import Config
+# setup kivy clock as 'free_only'
+Config.set('kivy', 'kivy_clock', 'free_only')
+#endregion
 from kivy.graphics import Color, Rectangle
 from kivy.graphics.instructions import InstructionGroup
 from kivy.core.text import Label as CoreLabel
@@ -27,7 +35,30 @@ class PrPiano(BoxLayout):
         # canvas init
         self.draw_canvas()
 
-    # private methods
+    # public methods
+    def play(self, msg):
+        # draw note_on/off status
+        if msg.type == 'note_on':
+            if msg.velocity == 0:
+                self.note(msg.note, on=False)
+                self.update_keyoverlay()
+            else:
+                self.note(msg.note, on=True)
+                self.update_keyoverlay()
+        elif msg.type == 'note_off':
+            self.note(msg.note, on=False)
+            self.update_keyoverlay()
+        else:
+            pass
+    def stop(self):
+        """ stop all the playing notes """
+        self.keypressed = {0:False,}
+        self.update_keyoverlay()
+
+    # set note
+    def note(self, note, on):
+        self.keypressed[self.keymap[note]] = on
+    # 1:1 matching of key and actual order of drawing
     def _set_keymap(self):
         # set reverse keymap
         rev_keymap = []
@@ -44,15 +75,7 @@ class PrPiano(BoxLayout):
             self.keymap.append(rev_keymap.index(idx))
         #print (self.keymap)            
 
-    # public methods
-    def note(self, note, on):
-        self.keypressed[self.keymap[note]] = on
-    def update_keyoverlay(self):
-        self.keyoverlay['ebony'].clear()
-        self.keyoverlay['ivory'].clear()
-        self.draw_keyoverlay()
-    
-    # draw
+    # keyoverlay
     def draw_keyoverlay(self):
         self.keyoverlay['ebony'].clear()
         self.keyoverlay['ivory'].clear()
@@ -97,6 +120,12 @@ class PrPiano(BoxLayout):
                     if self.keypressed.get(idx_key, False):
                         self.keyoverlay['ebony'].add(Rectangle(pos=(0, pos_y-6), size=(60, ebony_interval), group='ebony'))
                     idx_key += 1
+    def update_keyoverlay(self):
+        self.keyoverlay['ebony'].clear()
+        self.keyoverlay['ivory'].clear()
+        self.draw_keyoverlay()
+
+    # canvas
     def draw_canvas(self):
         # clear canvas
         self.canvas.clear()
@@ -180,3 +209,46 @@ class PrPiano(BoxLayout):
                 Rectangle(pos=(2, y-text.height/2), size=text.size, texture=text))
 
         print("piano:", self.pos, self.size, len(self.canvas.children), idx_key)
+
+if __name__ == '__main__':
+    from kivy.app import App
+    from kivy.core.window import Window
+    from kivy.uix.scrollview import ScrollView
+    from kivy.clock import Clock
+    from piro.midi.play import PrMidi
+    class PrApp(App):
+        """Main App"""
+        def build(self):
+            # window size / position
+            Window.size = (150, 300)
+            Window.left, Window.top = 0, 600
+
+            # members
+            self.layout = BoxLayout()
+            self.view = ScrollView(
+                size_hint=(None, 1),
+                width=98,
+                bar_width=5,
+                scroll_type=['bars']
+            )
+            
+            self.view.add_widget(pno)
+            self.layout.add_widget(self.view)
+
+            Clock.schedule_once(trigger, 0)
+
+            # return
+            return self.layout
+
+    def trigger(instance):        
+        midi.trigger(callback=play, callback_timebar=mypass)
+    def play(i, msg, now):
+        pno.play(msg)
+    def mypass(i, now):
+        pass
+
+    midi = PrMidi(
+        midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
+        midi_portname='Microsoft GS Wavetable Synth 0')
+    pno = PrPiano()
+    PrApp().run()
