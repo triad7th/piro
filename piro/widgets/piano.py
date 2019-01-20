@@ -16,7 +16,16 @@ from piro.env import PrEnv as Env
 from piro.midi.clock import PrClock
 
 class PrPiano(BoxLayout):
-    """Piano Body Drawing"""
+    """
+        PrPiano
+        =======
+
+        provides a horizontal piano image with key on/off visual effect
+
+        1. The main goal of this object is just drawing a piano keyboard
+        2. Addtionally, you can set key on/off effect with 'play' public method
+
+    """
     # init
     def __init__(self, **kwargs):
         # make sure we aren't overriding any important functionality
@@ -26,77 +35,60 @@ class PrPiano(BoxLayout):
         self.size_hint = (None, None)
         self.size = (150, 1640)
 
-        # keys
+        """ keys are ordered by their drawing sequence in canvas
+            use keymap to find the key for the target note
+            ex) self.keys[self.keymap[3]]  => returns the key object of D#0
+        """
         self.keys = []        
-        self.keymap = []
-
-        # keymap
-        self._set_keymap()
+        self.keymap = Env.PNO_KEYMAP()
 
         # canvas init
-        self.draw_canvas()
-
-    @property
-    def lastkey(self):
-        if len(self.keys) > 0:
-            return self.keys[len(self.keys)-1] 
-        else:
-            return None
+        self._draw_canvas()
 
     # public methods
     def play(self, msg):
-        # draw note_on/off status
+        """draw note_on/off status. accept mido message"""
         if msg.type == 'note_on':
             if msg.velocity == 0:
-                self.note(note=msg.note, on=False)
+                self._note(note=msg.note, on=False)
             else:
-                self.note(note=msg.note, on=True)
+                self._note(note=msg.note, on=True)
         elif msg.type == 'note_off':
-            self.note(note=msg.note, on=False)
+            self._note(note=msg.note, on=False)
         else:
             pass
     def stop(self):
         """ stop all the playing notes """
         for key in self.keys:
             if key['pressed']:
-                self.note(key=key, on=False)
+                self._note(key=key, on=False)
 
+    @property
+    def _lastkey(self):
+        """ returns the last object of self.keys """
+        if len(self.keys) > 0:
+            return self.keys[len(self.keys)-1] 
+        else:
+            return None
     # set note
-    def note(self, on, note=0, key=None):
+    def _note(self, on, note=0, key=None):
         if not key:
             key = self.keys[self.keymap[note]]
 
         if on and not key['pressed']:
-            key['color'].rgba = Env.PRESSED_COLOR
+            key['color'].rgba = Env.PNO_PRESSED_COLOR
             key['pressed'] = True
         elif not on and key['pressed']:
             if key['type'] == 'ivory':
-                key['color'].rgba = Env.IVORY_COLOR
+                key['color'].rgba = Env.PNO_IVORY_COLOR
             elif key['type'] == 'ebony':
-                key['color'].rgba = Env.EBONY_COLOR
+                key['color'].rgba = Env.PNO_EBONY_COLOR
             else:
                 pass
             key['pressed'] = False
-
-    # 1:1 matching of key and actual order of drawing
-    def _set_keymap(self):
-        # set reverse keymap
-        rev_keymap = []
-        for octave in range(Env.MAX_OCTAVES):
-            for ivory in [0, 2, 4, 5, 7, 9, 11]:
-                rev_keymap.append(octave*12+ivory)
-        for octave in range(Env.MAX_OCTAVES):
-            for ebony in [1, 3, 6, 8, 10]:
-                rev_keymap.append(octave*12+ebony)
-        
-        # reverse it to set keymap
-        self.keymap = []
-        for idx in range(len(rev_keymap)):
-            self.keymap.append(rev_keymap.index(idx))
-        #print (self.keymap)            
-
-    # canvas
-    def draw_canvas(self):
+    
+    # draw kivy canvas
+    def _draw_canvas(self):
         # clear canvas
         self.canvas.clear()
 
@@ -121,8 +113,8 @@ class PrPiano(BoxLayout):
             # position for the octave start
             pos_octave.append(pos_y)
             for interval in ivory_intervals:
-                self.keys.append({'type':'ivory', 'pressed':False, 'color':Color(*Env.IVORY_COLOR)})
-                self.canvas.add(self.lastkey['color'])
+                self.keys.append({'type':'ivory', 'pressed':False, 'color':Color(*Env.PNO_IVORY_COLOR)})
+                self.canvas.add(self._lastkey['color'])
                 self.canvas.add(Rectangle(pos=(0, pos_y), size=(90, interval)))
                 pos_y += interval + 1
                 idx_key += 1
@@ -142,8 +134,8 @@ class PrPiano(BoxLayout):
             for idx, interval in enumerate(ivory_intervals):
                 pos_y += interval + 1
                 if idx not in [2, 6]:
-                    self.keys.append({'type':'ebony', 'pressed':False, 'color':Color(*Env.EBONY_COLOR)})
-                    self.canvas.add(self.lastkey['color'])
+                    self.keys.append({'type':'ebony', 'pressed':False, 'color':Color(*Env.PNO_EBONY_COLOR)})
+                    self.canvas.add(self._lastkey['color'])
                     self.canvas.add(Rectangle(pos=(0, pos_y-6), size=(60, ebony_interval)))                
                     idx_key += 1
 

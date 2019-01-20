@@ -1,27 +1,72 @@
+#region environment
+import sys
+sys.path.append(".\\")
+#endregion
+from kivy.graphics import PushMatrix, PopMatrix, Scale
 from kivy.uix.scrollview import ScrollView
+from kivy.effects.scroll import ScrollEffect
 from kivy.core.window import Window
 from kivy.clock import Clock
-from kivy.effects.scroll import ScrollEffect
-from piro.widgets.roll import PrRoll
 from piro.midi.helper import PrHelper
 
 class PrRollView(ScrollView):
-    """Roll ScrollView, Accepts Key Up/Dn"""
-    def __init__(self, **kwargs):
+    """
+        PrScrollView
+        ============
+
+        provides a container for PrRoll with these functions
+
+        1. Scroll [horizontal/vertical]
+        2. Zoom [in/out]
+        3. You must set the child widget - it can be any kivy widget.
+        
+    """
+    def __init__(self, child, **kwargs):
         # make sure we aren't overriding any important functionality
         super(PrRollView, self).__init__(**kwargs)
 
-        # props
+        # kivy props
+        self.size_hint=(1, 1)
         self.bar_width = 25
         self.scroll_type = ['bars']
         # No Effect for Scroll - kivy's scroll effect is buggy. I won't use it!
         self.effect_cls = ScrollEffect
 
-        # members
-        self.pr_roll = PrRoll()
+        """ load child
 
-        # child layout
-        self.add_widget(self.pr_roll)
+            self.child : child object (any kivy widget)
+            self.child_scale
+            self.child_width : child width at scale 1.0
+            self.child_height : child height at scale 1.0
+        """
+        self.child = None
+        self.load_child(child)
+
+    # public methods
+    def child_x(self, x):
+        return self.child_scale * x
+    def load_child(self, child):
+        if self.child:
+            self.remove_widget(self.child)
+        # members
+        self.child = child
+        # zoom in/out props
+        self.child_width = self.child.width
+        self.child_height = self.child.height
+
+        self.child.canvas.before.clear()
+        with child.canvas.before:
+            PushMatrix()
+            self.child_scale = Scale(1.0)
+
+        self.child.canvas.after.clear()
+        with child.canvas.after:
+            PopMatrix()
+
+        # add child
+        self.add_widget(self.child)
+        # return self
+        return self
 
     @property
     def local_left(self):
@@ -31,35 +76,10 @@ class PrRollView(ScrollView):
         return self.to_local(self.width + self.x, 0)[0]
     @property
     def scroll_width(self):
-        return self.pr_roll.width - self.width
+        return self.child.width - self.width
     @property
     def scale(self):
-        return self.pr_roll.scale
-
-    # bind callbacks
-    def update(self, instance=None):
-        """Update local_left/right, scroll_width
-
-        [Used by]
-            PrRoll
-                .focus
-                .zoom_in
-                .zoom_out
-                .zoom_to
-
-            PrRoot
-                .draw_roll
-                ._scroll_stop
-                ._keydown - g/h/w/play/c
-        """
-        self.show()
-
-    # show local left/right
-    def show(self):        
-        # print('local left/right/width/bar_x : '
-        #     ,self.local_left, '/', self.local_right, '/'
-        #     ,self.pr_roll.width, '/', self.parent.parent.bar_x)
-        pass
+        return self.child_scale
 
     # focus
     def focus(self, x):
@@ -72,9 +92,52 @@ class PrRollView(ScrollView):
 
     # zoom in/out
     def zoom_in(self):
-        self.pr_roll.zoom_in()
+        self.child_scale.x *= 1.1
+        self.child.width *= 1.1
     def zoom_out(self):
-        self.pr_roll.zoom_out()
+        self.child_scale.x /= 1.1
+        self.child.width /= 1.1
     def zoom_to(self, factor):
-        self.pr_rooll.zoom_to(factor)
+        self.child_scale.x = factor
+        self.child.width *= factor
 
+if __name__ == '__main__':
+    from kivy.app import App
+    from kivy.core.window import Window
+    from kivy.uix.boxlayout import BoxLayout
+    from piro.midi.clock import PrClock
+    from piro.midi.play import PrMidi
+    from piro.widgets.roll import PrRoll
+    class PrApp(App):
+        """Main App"""
+        def build(self):
+            # window size / position
+            Window.size = (1280, 1280)
+            Window.left, Window.top = 30, 30
+
+            # members
+            self.layout = BoxLayout()
+            self.layout.add_widget(view)
+
+            PrClock.schedule_once(trigger, 0)
+            # return
+            return self.layout
+
+    def trigger(instance):
+        #midi.trigger(callback=play, callback_timebar=mypass)
+        print ('roll size :', roll.size)
+        print ('pipqn :', midi.ppqn * ( roll.width / midi.totalticks ))
+        print ('zoom :', view.scale.x )
+        print ('child :', view.child_width, view.child_height)
+        print ('view :', view.size)
+    def play(i, msg, now):
+        roll.play(msg)
+    def mypass(i, now):
+        pass
+
+    midi = PrMidi(
+        midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
+        midi_portname='Microsoft GS Wavetable Synth 0')
+    roll = PrRoll(midi)
+    view = PrRollView(roll)
+    PrApp().run()

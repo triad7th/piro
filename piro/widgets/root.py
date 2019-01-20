@@ -41,7 +41,7 @@ class PrRoot(BoxLayout):
 
         # widget shorthands
         self.pno = self.pr_piano_view.pr_piano
-        self.roll = self.pr_roll_view.pr_roll
+        self.roll = self.pr_roll_view.child
         self.rollview = self.pr_roll_view
         self.pianoview = self.pr_piano_view
 
@@ -97,8 +97,8 @@ class PrRoot(BoxLayout):
         roll = self.roll
 
         # draw meterbars / notes
-        roll.draw_meterbars(midi=self.midi)
-        roll.draw_notes(midi=self.midi)
+        roll._draw_meterbars(midi=self.midi)
+        roll._draw_notes(midi=self.midi)
 
         # adjust y scroll
         if rollview.height < roll.height:

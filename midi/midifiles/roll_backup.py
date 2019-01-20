@@ -1,8 +1,5 @@
-#region environment
-import sys
-sys.path.append(".\\")
-#endregion
-from kivy.graphics import Color, Line, Rectangle
+from kivy.graphics import Color, Line, Rectangle, PushMatrix, PopMatrix
+from kivy.graphics import Translate, Rotate, Scale
 from kivy.graphics.instructions import InstructionGroup
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
@@ -10,86 +7,93 @@ from piro.midi.clock import PrClock
 from piro.env import PrEnv as Env
 
 class PrRoll(BoxLayout):
-    """
-        PrRoll
-        ======
-
-        provides a pianoroll image for a given midi file.
-
-        1. This object has only one function - drawing pianoroll canvas from a midi file.
-        2. View functionality(zoom in/out, select track(s)...) is achieved by PrRollView class.
-        3. A midi file must to be set when the object created.
-        4. You can load another midi file with 'load_midi' public method.        
-        
-    """
-    def __init__(self, midi, **kwargs):
+    """Roll Drawing"""
+    # init
+    def __init__(self, **kwargs):
         # make sure we aren't overriding any important functionality
         super(PrRoll, self).__init__(**kwargs)
 
         # midi
-        self.midi = midi
+        self.midi = None
 
         # props
         self.size_hint = (None, None)
         self.abs_width = 1280
         self.size = (1280, 1640)        
+        self.scale = None
 
         # meters
         self.pips = None
         self.meters = None
+        self.meter_width = 1
         
-        # notemap : [note(int)] { y / height }
-        self.notemap = Env.ROLL_NOTEMAP()
+        # notemap : [note(int)] { x / y / height }
+        self.notemap = []
+        self.set_notemap()
 
         # instruction groups
         self.notes = {'all':InstructionGroup()}
         self.meterbars = {'bar':InstructionGroup()}
         self.timebar = InstructionGroup()
-
-        # timebar object
         self._timebar = None
 
-        # load_midi
-        self.load_midi(midi)
+        # canvas
+        self.draw_timebar()
+        self.draw_canvas()
     
-    # public methods    
+    # notemap
+    def set_notemap(self):
+        """ set notemap """
+        self.notemap = []
+
+        # pos_y / interval
+        pos_y = 0
+        interval = 13
+
+        for i in range(128):                  
+            self.notemap.append({
+                'y': pos_y,
+                'height': interval
+            })
+            pos_y += interval
+    
+    # set timebar
     def set_timebar(self, time=.0):
-        """draw a timebar at the given time(sec)"""
         if self.pips:
             x = self.pips * time
             self._timebar.points = [x, 0, x, self.height]
-            return x
+            return x * self.scale.x
         return None
     def get_timebar(self, time=.0):
-        """get the current x-pos(pixel) of the timebar"""
         if self.pips:
-            return self.pips * time
+            return self.pips * time * self.scale.x
         return None
-    def load_midi(self, midi):
-        """reset the roll and load a new midi file"""
-        self.midi = midi
-        self.abs_width = ( Env.PIPQN / midi.ppqn ) * midi.totalticks
-        self.size = (self.abs_width, 1640)
-        self._draw_canvas()
-        self._draw_meterbars()
-        self._draw_notes()
-        return self
 
     # draw modules
-    def _draw_timebar(self):
+    def draw_timebar(self):
         # draw line
         self._timebar = Line(points=[0, 0, 0, self.height])
 
         # add timebar
-        self.timebar.add(Color(*Env.ROLL_TIMEBAR_COLOR))
         self.timebar.add(self._timebar)         
-    def _draw_meterbars(self):
+    def draw_meterbars(self, midi=None):
         """ draw meterbars """
+        # pass on conditions
+        if len(self.notemap) == 0:
+            return
+        elif not midi:
+            if self.midi:
+                midi = self.midi
+            else:
+                return
+
+        # update self.midi
+        if midi:
+            self.midi = midi
+        
         # clear meterbars
         self.meterbars['bar'].clear()
 
-        # midi
-        midi = self.midi
         # get total length of the song
         totalticks = self.midi.get_totalticks()
         # pixel per tick
@@ -101,7 +105,7 @@ class PrRoll(BoxLayout):
         self.pips = self.abs_width / self.midi.get_length()        
         
         # color pick
-        self.meterbars['bar'].add(Color(*Env.ROLL_METERBAR_COLOR))
+        self.meterbars['bar'].add(Color(0.3, 0.3, 0.3, 1))
         
         # meter info
         if not self.meters:
@@ -144,13 +148,22 @@ class PrRoll(BoxLayout):
                         next_meter = None
             
             x += pibar
-    def _draw_notes(self):
+    def draw_notes(self, midi=None):
         """ draw noteoverlay """
+        # pass on conditions
+        if len(self.notemap) == 0:
+            return
+        elif not midi:
+            if self.midi:
+                midi = self.midi
+            else:
+                return
+
         # notes
         note_ons = {}
 
-        # midi
-        midi = self.midi
+        # self.midi
+        self.midi = midi
 
         # clear note overlay
         self.notes['all'].clear()
@@ -203,27 +216,38 @@ class PrRoll(BoxLayout):
                             # note_off without note_on
                             # so, do nothing
                             pass
-    
-    # draw kivy canvas
-    def _draw_canvas(self):
+
+    # draw canvas
+    def draw_canvas(self):
         # roll width
         roll_width = self.width
       
         # clear canvas / notemap
         self.canvas.clear()
 
+        # 
+        # before canvas
+        #
+        self.canvas.before.clear()
+        with self.canvas.before:
+            PushMatrix()
+            self.scale = Scale(1.0)
+
         #
         # background
         #
         # color pick - background
-        self.canvas.add(Color(*Env.ROLL_BACKGROUND_COLOR))
-        self.canvas.add(Rectangle(pos=(0, 0), size=self.size))
+        self.canvas.add(
+            Color(0.8, 0.8, 1, 1.0))
+        self.canvas.add(
+            Rectangle(pos=(0, 0), size=self.size))
 
         #
         # ivory keys
         #
         # color pick - ivory
-        self.canvas.add(Color(*Env.ROLL_IVORY_COLOR))
+        self.canvas.add(
+            Color(1, 1, 1, 1.0))
 
         # ivory key intervals
         ivory_intervals = [26, 26, 13, 26, 26, 26, 13]
@@ -243,7 +267,8 @@ class PrRoll(BoxLayout):
         # ebony keys
         #
         # color pick - ebony
-        self.canvas.add(Color(*Env.ROLL_EBONY_COLOR))
+        self.canvas.add(
+            Color(.8, .8, .8, 1.0))
 
         # y position
         pos_y, key_height = (0, 12)
@@ -260,7 +285,6 @@ class PrRoll(BoxLayout):
         #
         # meterbars
         #
-        # self.meterbars is set here
         self.canvas.add(self.meterbars['bar'])
 
         #
@@ -271,51 +295,25 @@ class PrRoll(BoxLayout):
         #
         # timebar
         #
-        # self.timbar is set here
-        self._draw_timebar()
+        self.canvas.add(Color(1, 0.1, 0.1, 1))
         self.canvas.add(self.timebar)
-        #print("roll:", self.pos, self.size, len(self.canvas.children))
 
-if __name__ == '__main__':
-    from kivy.app import App
-    from kivy.core.window import Window
-    from kivy.uix.scrollview import ScrollView
-    from kivy.effects.scroll import ScrollEffect
-    from piro.midi.play import PrMidi
-    class PrApp(App):
-        """Main App"""
-        def build(self):
-            # window size / position
-            Window.size = (1280, 1280)
-            Window.left, Window.top = 30, 30
+        #
+        # after canvas
+        #
+        self.canvas.after.clear()
+        with self.canvas.after:
+            PopMatrix()
 
-            # members
-            self.layout = BoxLayout()
-            self.view = ScrollView(
-                size_hint=(1, 1),
-                bar_width=25,
-                scroll_type=['bars'],
-                effect_cls=ScrollEffect
-            )
-            
-            self.view.add_widget(roll)
-            self.layout.add_widget(self.view)
+        print("roll:", self.pos, self.size, len(self.canvas.children))
 
-            PrClock.schedule_once(trigger, 0)
-            # return
-            return self.layout
-
-    def trigger(instance):
-        #midi.trigger(callback=play, callback_timebar=mypass)
-        print ('roll size :', roll.size)
-        print ('pipqn :', midi.ppqn * ( roll.width / midi.totalticks ))
-    def play(i, msg, now):
-        roll.play(msg)
-    def mypass(i, now):
-        pass
-
-    midi = PrMidi(
-        midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
-        midi_portname='Microsoft GS Wavetable Synth 0')
-    roll = PrRoll(midi)
-    PrApp().run()
+    # zoom in/out/to
+    def zoom_in(self):
+        self.scale.x *= 1.1
+        self.width *= 1.1
+    def zoom_out(self):
+        self.scale.x /= 1.1
+        self.width /= 1.1
+    def zoom_to(self, factor):
+        self.scale.x = factor
+        self.width *= factor
