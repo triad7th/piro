@@ -119,6 +119,9 @@ if __name__ == '__main__':
             self.layout = BoxLayout()
             self.layout.add_widget(view)
 
+            # bind - keystrokes
+            Window.bind(on_key_down=keydown)        
+
             PrClock.schedule_once(trigger, 0)
             # return
             return self.layout
@@ -134,6 +137,32 @@ if __name__ == '__main__':
         roll.play(msg)
     def mypass(i, now):
         pass
+    def keydown(instance, key, keycode, text, modifiers):
+        """Callback for KeyDown"""
+        # zoom out
+        if text == 'g':
+            view.zoom_in()
+        # zoom in
+        elif text == 'h':
+            view.zoom_out()
+        # play
+        elif text == ' ':
+            PrHelper.msg('keydown','play')
+        # reload
+        elif text == 'w':            
+            PrHelper.msg('keydown','rewind')
+        # check
+        elif text == 'c':
+            PrHelper.msg('keydown', 'scroll_y', {
+                "scroll_y":view.scroll_y,
+                "scroll_x":view.scroll_x,
+                "local_left":view.local_left,
+                "local_right":view.local_right,
+                "child_width":view.child_width,
+                "child_height":view.child_height,
+                "child_scale":view.scale}
+            )                
+        return True
 
     midi = PrMidi(
         midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
