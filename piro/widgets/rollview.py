@@ -2,104 +2,49 @@
 import sys
 sys.path.append(".\\")
 #endregion
-from kivy.graphics import PushMatrix, PopMatrix, Scale
-from kivy.uix.scrollview import ScrollView
-from kivy.effects.scroll import ScrollEffect
-from kivy.core.window import Window
-from kivy.clock import Clock
+from piro.widgets.zoomview import PrZoomView
+from piro.widgets.roll import PrRoll
 from piro.midi.helper import PrHelper
 
-class PrRollView(ScrollView):
+class PrRollView(PrZoomView):
     """
-        PrScrollView
+        PrRollView
         ============
 
-        provides a container for PrRoll with these functions
+        based on PrZoomView, this widget privdes :
 
-        1. Scroll [horizontal/vertical]
-        2. Zoom [in/out]
-        3. You must set the child widget - it can be any kivy widget.
-        
+        1. automatically set child as PrRoll
+        2. timebar select
+        3. focus based on the given time
+        4. convenient props for users
+       
     """
-    def __init__(self, child, **kwargs):
+    def __init__(self, midi, **kwargs):
+        # create a PrRoll oject
+        self.roll = PrRoll(midi)
+
         # make sure we aren't overriding any important functionality
-        super(PrRollView, self).__init__(**kwargs)
+        super(PrRollView, self).__init__(self.roll, **kwargs)
 
-        # kivy props
-        self.size_hint=(1, 1)
-        self.bar_width = 25
-        self.scroll_type = ['bars']
-        # No Effect for Scroll - kivy's scroll effect is buggy. I won't use it!
-        self.effect_cls = ScrollEffect
+        # bind touch down
+        self.roll.bind(on_touch_down=self.on_touch_down)
 
-        """ load child
-
-            self.child : child object (any kivy widget)
-            self.child_scale
-            self.child_width : child width at scale 1.0
-            self.child_height : child height at scale 1.0
-        """
-        self.child = None
-        self.load_child(child)
 
     # public methods
-    def child_x(self, x):
-        return self.child_scale * x
-    def load_child(self, child):
-        if self.child:
-            self.remove_widget(self.child)
-        # members
-        self.child = child
-        # zoom in/out props
-        self.child_width = self.child.width
-        self.child_height = self.child.height
+    def load(self, midi):
+        """ load a new mido object """
+        roll = self.roll
+        roll.load_midi(midi)
+        self.load_child(roll)
 
-        self.child.canvas.before.clear()
-        with child.canvas.before:
-            PushMatrix()
-            self.child_scale = Scale(1.0)
+    def set_timebar(self, time=None, x=None):
+        self.child.set_timebar(time, x)
 
-        self.child.canvas.after.clear()
-        with child.canvas.after:
-            PopMatrix()
-
-        # add child
-        self.add_widget(self.child)
-        # return self
-        return self
-
-    @property
-    def local_left(self):
-        return self.to_local(self.x, 0)[0]
-    @property
-    def local_right(self):
-        return self.to_local(self.width + self.x, 0)[0]
-    @property
-    def scroll_width(self):
-        return self.child.width - self.width
-    @property
-    def scale(self):
-        return self.child_scale
-
-    # focus
-    def focus(self, x):
-        """Scroll to the x"""
-        if self.local_left <= x and x <= self.local_right:
-            pass
-        else:
-            self.scroll_x = x / self.scroll_width          
-            self.update_from_scroll()
-
-    # zoom in/out
-    def zoom_in(self):
-        self.child_scale.x *= 1.1
-        self.child.width *= 1.1
-    def zoom_out(self):
-        self.child_scale.x /= 1.1
-        self.child.width /= 1.1
-    def zoom_to(self, factor):
-        self.child_scale.x = factor
-        self.child.width *= factor
+    # callbacks
+    def on_touch_down(self, touch):
+        print(touch, view.local_left, view.local_right)
+        self.set_timebar(self, x=touch.pos[0]/self.scale.x)
+        
 
 if __name__ == '__main__':
     from kivy.app import App
@@ -112,8 +57,8 @@ if __name__ == '__main__':
         """Main App"""
         def build(self):
             # window size / position
-            Window.size = (1280, 1280)
-            Window.left, Window.top = 30, 30
+            Window.size = (300, 200)
+            Window.left, Window.top = 30, 1000
 
             # members
             self.layout = BoxLayout()
@@ -160,13 +105,13 @@ if __name__ == '__main__':
                 "local_right":view.local_right,
                 "child_width":view.child_width,
                 "child_height":view.child_height,
-                "child_scale":view.scale}
+                "child_scale":view.scale }
             )                
         return True
 
     midi = PrMidi(
         midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
         midi_portname='Microsoft GS Wavetable Synth 0')
-    roll = PrRoll(midi)
-    view = PrRollView(roll)
+    view = PrRollView(midi)
+    roll = view.child
     PrApp().run()

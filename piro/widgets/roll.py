@@ -53,17 +53,23 @@ class PrRoll(BoxLayout):
         self.load_midi(midi)
     
     # public methods    
-    def set_timebar(self, time=.0):
+    def set_timebar(self, time=.0, x=None):
         """draw a timebar at the given time(sec)"""
-        if self.pips:
+        if x:
+            self._timebar.points = [x, 0, x, self.height]
+            return x
+        elif self.pips:
             x = self.pips * time
             self._timebar.points = [x, 0, x, self.height]
             return x
         return None
-    def get_timebar(self, time=.0):
+    def get_timebar(self, time=None):
         """get the current x-pos(pixel) of the timebar"""
-        if self.pips:
-            return self.pips * time
+        if time:
+            if self.pips:
+                return self.pips * time
+        elif self._timebar:
+            return self._timebar.points[0]
         return None
     def load_midi(self, midi):
         """reset the roll and load a new midi file"""
