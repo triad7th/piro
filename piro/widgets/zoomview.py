@@ -112,8 +112,8 @@ if __name__ == '__main__':
         """Main App"""
         def build(self):
             # window size / position
-            Window.size = (300, 200)
-            Window.left, Window.top = 30, 1000
+            Window.size = (800, 600)
+            Window.left, Window.top = 3100, 100
 
             # members
             self.layout = BoxLayout()

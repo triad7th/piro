@@ -27,7 +27,7 @@ class PrRollView(PrZoomView):
         super(PrRollView, self).__init__(self.roll, **kwargs)
 
         # bind touch down
-        self.roll.bind(on_touch_down=self.on_touch_down)
+        self.roll.on_touch_down=self._roll_click
 
 
     # public methods
@@ -40,10 +40,9 @@ class PrRollView(PrZoomView):
         self.child.set_timebar(time, x)
 
     # callbacks
-    def on_touch_down(self, touch):
-        print(touch, view.local_left, view.local_right)
-        self.set_timebar(self, x=touch.pos[0]/self.scale.x)
-        
+    def _roll_click(self, touch):        
+        print(touch.pos[0])
+        self.set_timebar(self, x=touch.pos[0]/self.scale.x)            
 
 if __name__ == '__main__':
     from kivy.app import App
@@ -55,8 +54,8 @@ if __name__ == '__main__':
         """Main App"""
         def build(self):
             # window size / position
-            Window.size = (300, 200)
-            Window.left, Window.top = 30, 1000
+            Window.size = (800, 600)
+            Window.left, Window.top = 3100, 100
 
             # members
             self.layout = BoxLayout()
