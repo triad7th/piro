@@ -41,7 +41,6 @@ class PrRoot(BoxLayout):
 
         # widget shorthands
         self.pno = self.pr_piano_view.pr_piano
-        self.roll = self.pr_roll_view.child
         self.rollview = self.pr_roll_view
         self.pianoview = self.pr_piano_view
 
@@ -67,7 +66,7 @@ class PrRoot(BoxLayout):
         # small widgets
         if self.pr_view:
             self.pr_piano_view = widgets.PrPianoView()
-            self.pr_roll_view = widgets.PrRollView()
+            self.pr_roll_view = widgets.PrRollView(self.midi)
 
         # add small widgets
         if self.pr_view:
@@ -92,21 +91,12 @@ class PrRoot(BoxLayout):
         self.pr_menu.btn_play.bind(on_press=self._menu_button_play)
         self.pr_menu.btn_test.bind(on_press=self._menu_button_test)
     def draw_roll(self, instance):
-        # widgets
-        rollview = self.rollview
-        roll = self.roll
-
-        # draw meterbars / notes
-        roll._draw_meterbars(midi=self.midi)
-        roll._draw_notes(midi=self.midi)
-
         # adjust y scroll
-        if rollview.height < roll.height:
-            rollview.scroll_y = ( ( roll.height - rollview.height ) / 2 ) / rollview.height
-        
+        self.rollview.horizontal_focus()
+
         # adjust zoom factor
-        pipqn = self.midi.ppqn * ( roll.width / self.midi.totalticks )
-        roll.zoom_to( PrEnv.PIPQN / pipqn )
+        # pipqn = self.midi.ppqn * ( roll.width / self.midi.totalticks )
+        # roll.zoom_to( PrEnv.PIPQN / pipqn )
 
     # callback - scroll_stop
     def _scroll_start(self, instance, scroll_y):
@@ -136,8 +126,8 @@ class PrRoot(BoxLayout):
         """Callback for Timebar - !!! frequent calls !!!"""
         if now - self.now > 0.025:
             self.now = now            
-            self.bar_x = self.roll.set_timebar(now)
-            self.rollview.focus(self.bar_x)
+            self.rollview.focus(self.rollview.set_timebar(time=now))
+
     def _play_callback(self, instance, msg, now):
         '''Callback for Play'''
         self.pno.play(msg)      
@@ -157,7 +147,6 @@ class PrRoot(BoxLayout):
     def _keydown(self, instance, key, keycode, text, modifiers):
         """Callback for KeyDown"""
         view = self.rollview
-        roll = self.roll
         # zoom out
         if text == 'g':
             view.zoom_in()
@@ -171,7 +160,7 @@ class PrRoot(BoxLayout):
         elif text == 'w':            
             self.midi.rewind()
             self.now=.0
-            view.focus(roll.set_timebar(self.now))
+            view.focus(view.set_timebar(time=self.now))
         # check
         elif text == 'c':
             PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)
@@ -179,4 +168,18 @@ class PrRoot(BoxLayout):
         return True
 
 if __name__ == '__main__':
-    print("root widget")
+    class PrApp(App):
+        """Main App"""
+        def build(self):
+            # window size / position
+            Window.size = (800, 600)
+            Window.left, Window.top = 3100, 100
+
+            # members
+            self.pr_root = PrRoot()
+
+            # return
+            return self.pr_root
+
+    if __name__ == '__main__':
+        PrApp().run()

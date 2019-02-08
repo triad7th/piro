@@ -37,7 +37,10 @@ class PrRollView(PrZoomView):
         roll.load_midi(midi)
         self.load_child(roll)
     def set_timebar(self, time=None, x=None):
-        self.child.set_timebar(time, x)
+        if time:
+            return self.child.set_timebar(time, x) * self.scale.x
+        else:
+            return self.child.set_timebar(time, x)
 
     # callbacks
     def _roll_click(self, touch):        

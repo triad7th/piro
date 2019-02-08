@@ -90,6 +90,13 @@ class PrZoomView(ScrollView):
             self.scroll_x = x / self.scroll_width          
             self.update_from_scroll()
 
+    # horizontal focus
+    def horizontal_focus(self):
+        """Focus horizontally"""
+        if self.height < self.child.height:
+            self.scroll_y = ( ( self.child.height - self.height ) / 2 ) / self.child.height
+            self.update_from_scroll()
+        
     # zoom in/out
     def zoom_in(self):
         self.child_scale.x *= 1.1
@@ -146,9 +153,11 @@ if __name__ == '__main__':
         # zoom out
         if text == 'g':
             view.zoom_in()
+            print(view.local_left, view.local_right, view.scroll_width, view.scale.x)
         # zoom in
         elif text == 'h':
             view.zoom_out()
+            print(view.local_left, view.local_right, view.scroll_width, view.scale.x)
         # play
         elif text == ' ':
             PrHelper.msg('keydown','play')
