@@ -42,7 +42,7 @@ class PrRoll(BoxLayout):
         self.notemap = Env.ROLL_NOTEMAP()
 
         # instruction groups
-        self.notes = {'all':InstructionGroup()}
+        self.notes = {}
         self.meterbars = {'bar':InstructionGroup()}
         self.timebar = InstructionGroup()
 
@@ -150,8 +150,20 @@ class PrRoll(BoxLayout):
                         next_meter = None
             
             x += pibar
+
     def _draw_notes(self):
         """ draw noteoverlay """
+        for track in self.midi.midi_file.tracks:
+            print(track.name)
+
+        tr_no = 1
+        tr_name = 'Tr{0}'.format(tr_no)
+
+        self.notes[tr_name] = self.notes.get(tr_name, InstructionGroup())
+        self._draw_track(tr_name, 1, Env.NOTE_COLOR[1])
+
+    def _draw_track(self, track_name, track_no, track_color):
+        """ draw note for one track """
         # notes
         note_ons = {}
 
@@ -159,27 +171,31 @@ class PrRoll(BoxLayout):
         midi = self.midi
 
         # clear note overlay
-        self.notes['all'].clear()
+        self.notes[track_name].clear()
 
         # color pick
-        self.notes['all'].add(Color(0.5, 0.5, 0.5, 1))
+        self.notes[track_name].add(Color(*track_color))
 
         # tick realted
         tick = 0
         totalticks = self.midi.get_totalticks()
         pptick = self.width / totalticks
 
-        for msg in midi.midi_file.tracks[1]:
+        # print
+        print( "{0} : {3}({4}) | tick : {1} | totalticks : {2}".format(track_no, tick, totalticks, track_name, track_color))
+
+        for msg in midi.midi_file.tracks[track_no]:
             # time count
             tick += msg.time
+            print(msg)
             if not msg.is_meta:
-                if msg.type == 'note_on':
+                if msg.type == 'note_on' or msg.type == 'note_off':
                     # current x position
                     x = tick * pptick
                     # get the note history
                     note_on = note_ons.get(msg.note)
                     if note_on:
-                        if msg.velocity == 0:                            
+                        if msg.velocity == 0 or msg.type == 'note_off':                            
                             # calculate note info
                             note_off = self.notemap[msg.note]
                             note_off['width'] = x - note_on['x']
@@ -189,8 +205,8 @@ class PrRoll(BoxLayout):
                             size = ( note_off['width'], note_off['height']-1 )
 
                             # draw rectangle
-                            self.notes['all'].add(
-                                Rectangle(pos=pos, size=size, group='all')
+                            self.notes[track_name].add(
+                                Rectangle(pos=pos, size=size, group=track_name)
                             )
 
                             # clear note_on
@@ -272,7 +288,12 @@ class PrRoll(BoxLayout):
         #
         # note overlay - all
         #
-        self.canvas.add(self.notes['all'])
+        for ov in range(17):
+            tr_name = 'Tr{0}'.format(ov)
+
+            self.notes[tr_name] = self.notes.get(tr_name, InstructionGroup())
+            print('adding : {0}'.format(tr_name))
+            self.canvas.add(self.notes[tr_name])
 
         #
         # timebar
@@ -292,8 +313,8 @@ if __name__ == '__main__':
         """Main App"""
         def build(self):
             # window size / position
-            Window.size = (1280, 1280)
-            Window.left, Window.top = 30, 30
+            Window.size = (1280, 600)
+            Window.left, Window.top = 3100, 30
 
             # members
             self.layout = BoxLayout()

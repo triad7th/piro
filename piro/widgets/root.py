@@ -29,7 +29,7 @@ class PrRoot(BoxLayout):
 
         # props
         self.midi = PrMidi(
-            midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
+            midi_filename='.\\midi\\midifiles\\a-whole-new-world.mid',
             midi_portname='Microsoft GS Wavetable Synth 0')
         self.orientation = 'vertical'
         self.now = .0
@@ -73,7 +73,7 @@ class PrRoot(BoxLayout):
             self.pr_view.add_widget(self.pr_piano_view)
             self.pr_view.add_widget(self.pr_roll_view)
         # add big widgets
-        self.add_widget(self.pr_menu)
+        #self.add_widget(self.pr_menu)
         self.add_widget(self.pr_view)
     def widget_bind(self):
         """
