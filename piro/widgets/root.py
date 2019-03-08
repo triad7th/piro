@@ -148,11 +148,22 @@ class PrRoot(BoxLayout):
         """Callback for KeyDown"""
         view = self.rollview
         # zoom out
-        if text == 'g':
+        if text == 'h':
             view.zoom_in()
+            view.focus(view.timebar, pos='mid')
         # zoom in
-        elif text == 'h':
+        elif text == 'g':
             view.zoom_out()
+            view.focus(view.timebar, pos='mid')
+        # focus
+        elif text == 'f':
+            view.focus(view.timebar, pos='mid')
+        # track
+        elif text >= '0' and text <= '9':
+            if view.child.get_track_visibility(text):
+                view.child.hide_track(text)
+            else:
+                view.child.show_track(text)
         # play
         elif text == ' ':
             self._menu_button_play(self.pr_menu.btn_play)

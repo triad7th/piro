@@ -44,7 +44,6 @@ class PrRollView(PrZoomView):
 
     # callbacks
     def _roll_click(self, touch):        
-        print(touch.pos[0])
         self.set_timebar(self, x=touch.pos[0]/self.scale.x)            
 
 if __name__ == '__main__':

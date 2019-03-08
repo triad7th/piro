@@ -80,15 +80,23 @@ class PrZoomView(ScrollView):
     @property
     def scale(self):
         return self.child_scale
+    @property
+    def timebar(self):
+        return self.child._timebar.points[0] * self.child_scale.x
 
     # focus
-    def focus(self, x):
+    def focus(self, x, pos='left'):
         """Scroll to the x"""
-        if self.local_left <= x and x <= self.local_right:
-            pass
-        else:
-            self.scroll_x = x / self.scroll_width          
-            self.update_from_scroll()
+        if pos == 'left':
+            if self.local_left <= x and x <= self.local_right:
+                pass
+            else:
+                self.scroll_x = x / self.scroll_width          
+                self.update_from_scroll()
+        elif pos == 'mid':
+            x = max(0, x-(self.local_right-self.local_left)/2)
+            self.scroll_x = x / self.scroll_width
+            self.update_from_scroll()            
 
     # horizontal focus
     def horizontal_focus(self):
