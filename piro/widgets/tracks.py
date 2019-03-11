@@ -1,6 +1,6 @@
 #region environment
-import sys
-sys.path.append(".\\")
+#import sys
+#sys.path.append(".\\")
 #endregion
 from kivy.graphics.instructions import InstructionGroup
 
@@ -54,7 +54,7 @@ class PrTracks:
     def draw(self):
         self.container.clear()
         for track in self.tracks:
-            self.container.add(track)        
+            self.container.add(track.canvas)        
         return self.container
 
 if __name__ == '__main__':
@@ -76,6 +76,9 @@ if __name__ == '__main__':
 
             # members
             self.layout = BoxLayout()
+            test = InstructionGroup()
+            a = PrTracks()
+            a.add(PrTrack('', True))
 
             self.layout.canvas.add(Rectangle(pos=(100, 100), size=(100, 100)))
             PrClock.schedule_once(trigger, 0)

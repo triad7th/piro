@@ -2,14 +2,16 @@
 import sys
 sys.path.append(".\\")
 #endregion
+from piro.widgets.tracks import PrTrack, PrTracks
+
 from kivy.graphics import Color, Line, Rectangle
 from kivy.graphics.instructions import InstructionGroup
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
-
-from piro.widgets.tracks import PrTrack, PrTracks
 from piro.midi.clock import PrClock
 from piro.env import PrEnv as Env
+
+
 
 class PrRoll(BoxLayout):
     """
@@ -213,7 +215,7 @@ class PrRoll(BoxLayout):
 
                             # draw rectangle
                             track.canvas.add(
-                                Rectangle(pos=pos, size=size, group=tr_no)
+                                Rectangle(pos=pos, size=size, group='Tr{0}'.format(tr_no))
                             )
 
                             # clear note_on
@@ -298,7 +300,7 @@ class PrRoll(BoxLayout):
         for ov in range(17):
             track = PrTrack(ov, True)
             self.tracks.add(track)    
-            self.canvas.add(track.canvas)
+        self.canvas.add(self.tracks.draw())
 
         #
         # timebar
