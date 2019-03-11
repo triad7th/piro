@@ -160,10 +160,12 @@ class PrRoot(BoxLayout):
             view.focus(view.timebar, pos='mid')
         # track
         elif text >= '0' and text <= '9':
-            if view.child.get_track_visibility(text):
-                view.child.hide_track(text)
-            else:
-                view.child.show_track(text)
+            track = view.child.tracks.get(int(text))
+            if track:
+                if track.visible:
+                    view.child.hide_track(int(text))
+                else:
+                    view.child.show_track(int(text))
         # play
         elif text == ' ':
             self._menu_button_play(self.pr_menu.btn_play)

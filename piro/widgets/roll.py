@@ -85,17 +85,9 @@ class PrRoll(BoxLayout):
         self._draw_notes()
         return self
     def hide_track(self, track_no):
-        track = self.tracks.get(track_no)
-        if track:
-            if track.visible:
-                self.canvas.remove(track.canvas)
-                track.visible = False
+        self.tracks.hide(track_no)
     def show_track(self, track_no):
-        track = self.tracks.get(track_no)
-        if track:
-            if track.visible:
-                self.canvas.add(track.canvas)
-                track.visible = True
+        self.tracks.show(track_no)
 
     # draw modules
     def _draw_timebar(self):
@@ -299,7 +291,7 @@ class PrRoll(BoxLayout):
         #
         for ov in range(17):
             track = PrTrack(ov, True)
-            self.tracks.add(track)    
+            self.tracks.add(ov, track)    
         self.canvas.add(self.tracks.draw())
 
         #

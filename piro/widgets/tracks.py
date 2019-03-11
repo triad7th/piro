@@ -42,19 +42,38 @@ class PrTracks:
     """
     def __init__(self):
         self.container = InstructionGroup()
-        self.tracks = []
+        self.tracks = {}
         
     def get(self, idx):
-        if len(self.tracks) > idx:
+        if idx in self.tracks:
             return self.tracks[idx]
     
-    def add(self, track):
-        self.tracks.append(track)
+    def add(self, idx, track):
+        self.tracks[idx] = track
+        self.container.add(track.canvas)
+
+    def remove(self, idx):
+        self.container.remove(self.tracks[idx].canvas)
+        self.tracks[idx] = None
+
+    def show(self, idx):
+        track = self.tracks[idx]
+        if track:
+            if self.tracks[idx].visible == False:
+                self.container.add(track.canvas)
+                track.visible = True
+
+    def hide(self, idx):
+        track = self.tracks[idx]
+        if track:
+            if self.tracks[idx].visible:
+                self.container.remove(track.canvas)
+                track.visible = False
 
     def draw(self):
         self.container.clear()
-        for track in self.tracks:
-            self.container.add(track.canvas)        
+        for key in self.tracks:
+            self.container.add(self.tracks[key].canvas)        
         return self.container
 
 if __name__ == '__main__':
