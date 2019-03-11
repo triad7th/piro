@@ -6,6 +6,8 @@ from kivy.graphics import Color, Line, Rectangle
 from kivy.graphics.instructions import InstructionGroup
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
+
+from piro.widgets.tracks import PrTrack, PrTracks
 from piro.midi.clock import PrClock
 from piro.env import PrEnv as Env
 
@@ -42,7 +44,7 @@ class PrRoll(BoxLayout):
         self.notemap = Env.ROLL_NOTEMAP()
 
         # instruction groups
-        self.notes = {}
+        self.tracks = PrTracks()
         self.meterbars = {'bar':InstructionGroup()}
         self.timebar = InstructionGroup()
 
@@ -81,25 +83,17 @@ class PrRoll(BoxLayout):
         self._draw_notes()
         return self
     def hide_track(self, track_no):
-        t = self.track_name(track_no)
-        if t in self.notes:
-            if self.notes[t]['visible'] == True:                
-                self.canvas.remove(self.notes[t]['group'])
-                self.notes[t]['visible'] = False                
+        track = self.tracks.get(track_no)
+        if track:
+            if track.visible:
+                self.canvas.remove(track.canvas)
+                track.visible = False
     def show_track(self, track_no):
-        t = self.track_name(track_no)
-        if t in self.notes:
-            if self.notes[t]['visible'] == False:            
-                self.canvas.add(self.notes[t]['group'])
-                self.notes[t]['visible'] = True
-    def get_track_visibility(self, track_no):
-        t = self.track_name(track_no)
-        if t in self.notes:
-            return self.notes[t]['visible']
-
-    # tracks
-    def track_name(self, track_no):
-        return 'Tr{0}'.format(track_no)   
+        track = self.tracks.get(track_no)
+        if track:
+            if track.visible:
+                self.canvas.add(track.canvas)
+                track.visible = True
 
     # draw modules
     def _draw_timebar(self):
@@ -174,28 +168,21 @@ class PrRoll(BoxLayout):
     def _draw_notes(self):
         """ draw noteoverlay """
         for tr_no, track in enumerate(self.midi.midi_file.tracks):
-            tr_name = self.track_name(tr_no)
-
-            self.notes[tr_name] = self.notes.get(tr_name, {
-                'visible' : True,
-                'group' : InstructionGroup()
-            })
-            self._draw_track(track, tr_name, tr_no, Env.NOTE_COLOR[tr_no])
+            self._draw_track(track, tr_no, Env.NOTE_COLOR[tr_no])
 
 
-    def _draw_track(self, track, track_name, track_no, track_color):
+    def _draw_track(self, tr_midi, tr_no, tr_color):
         """ draw note for one track """
         # notes
         note_ons = {}
 
-        # midi
-        midi = self.midi
-
         # clear note overlay
-        self.notes[track_name]['group'].clear()
+        track = self.tracks.get(tr_no)
+        if track:
+            track.canvas.clear()
 
         # color pick
-        self.notes[track_name]['group'].add(Color(*track_color))
+        track.canvas.add(Color(*tr_color))
 
         # tick realted
         tick = 0
@@ -203,9 +190,9 @@ class PrRoll(BoxLayout):
         pptick = self.width / totalticks
 
         # print
-        print( "{0:0>2} | {1: >5} | {2: <16} | {3: >20} | totalticks : {4:08}".format(track_no, track_name, track.name, str(track_color), totalticks))
+        print( "{0:0>2} | {1: >5} | {2: <16} | {3: >20} | totalticks : {4:08}".format(tr_no, '', tr_midi.name, str(tr_color), totalticks))
 
-        for msg in track:
+        for msg in tr_midi:
             # time count
             tick += msg.time
             if not msg.is_meta:
@@ -225,8 +212,8 @@ class PrRoll(BoxLayout):
                             size = ( note_off['width'], note_off['height']-1 )
 
                             # draw rectangle
-                            self.notes[track_name]['group'].add(
-                                Rectangle(pos=pos, size=size, group=track_name)
+                            track.canvas.add(
+                                Rectangle(pos=pos, size=size, group=tr_no)
                             )
 
                             # clear note_on
@@ -309,13 +296,9 @@ class PrRoll(BoxLayout):
         # note overlay - all
         #
         for ov in range(17):
-            tr_name = self.track_name(ov)
-
-            self.notes[tr_name] = self.notes.get(tr_name, {
-                'visible' : True,
-                'group' : InstructionGroup()
-            })
-            self.canvas.add(self.notes[tr_name]['group'])
+            track = PrTrack(ov, True)
+            self.tracks.add(track)    
+            self.canvas.add(track.canvas)
 
         #
         # timebar
