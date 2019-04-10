@@ -3,6 +3,8 @@
 #sys.path.append(".\\")
 #endregion
 from kivy.graphics.instructions import InstructionGroup
+from kivy.graphics import Color
+from piro.env import PrEnv as Env
 
 class PrTrack:
     """
@@ -20,12 +22,29 @@ class PrTrack:
         self.name = None
         self.visible = None
 
+        self.color = None
         self.new(name, visibility)
 
-    def new(self, name='', visibility=False):
+    def new(self, name='', visibility=False, color=Env.NOTE_COLOR[0]):
         self.canvas = InstructionGroup()
         self.name = name
         self.visible = visibility
+        self.color = Color(*color)
+
+    def paint(self, color):
+        if color:
+            self.color = Color(*color)             
+        self.canvas.add(self.color)
+
+    def hide(self):
+        self.color.a = 0
+        self.visible = False
+
+    def show(self):
+        self.color.a = 1
+        self.visible = True
+
+    
         
 class PrTracks:
     """
@@ -60,15 +79,17 @@ class PrTracks:
         track = self.tracks[idx]
         if track:
             if self.tracks[idx].visible == False:
-                self.container.add(track.canvas)
-                track.visible = True
+                # self.container.add(track.canvas)
+                # track.visible = True
+                track.show()
 
     def hide(self, idx):
         track = self.tracks[idx]
         if track:
             if self.tracks[idx].visible:
-                self.container.remove(track.canvas)
-                track.visible = False
+                # self.container.remove(track.canvas)
+                # track.visible = False
+                track.hide()
 
     def draw(self):
         self.container.clear()

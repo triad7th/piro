@@ -164,7 +164,6 @@ class PrRoll(BoxLayout):
         for tr_no, track in enumerate(self.midi.midi_file.tracks):
             self._draw_track(track, tr_no, Env.NOTE_COLOR[tr_no])
 
-
     def _draw_track(self, tr_midi, tr_no, tr_color):
         """ draw note for one track """
         # notes
@@ -176,7 +175,7 @@ class PrRoll(BoxLayout):
             track.canvas.clear()
 
         # color pick
-        track.canvas.add(Color(*tr_color))
+        track.paint(tr_color)
 
         # tick realted
         tick = 0
