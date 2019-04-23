@@ -43,6 +43,7 @@ class PrRoot(BoxLayout):
         self.pno = self.pr_piano_view.pr_piano
         self.rollview = self.pr_roll_view
         self.pianoview = self.pr_piano_view
+        self.trackview = self.pr_track_view
 
         # bind - keystrokes
         Window.bind(on_key_up=self._keyup)
@@ -67,11 +68,13 @@ class PrRoot(BoxLayout):
         if self.pr_view:
             self.pr_piano_view = widgets.PrPianoView()
             self.pr_roll_view = widgets.PrRollView(self.midi)
+            self.pr_track_view = widgets.PrTrackView()
 
         # add small widgets
         if self.pr_view:
             self.pr_view.add_widget(self.pr_piano_view)
             self.pr_view.add_widget(self.pr_roll_view)
+            self.pr_view.add_widget(self.pr_track_view)
         # add big widgets
         #self.add_widget(self.pr_menu)
         self.add_widget(self.pr_view)
@@ -177,7 +180,15 @@ class PrRoot(BoxLayout):
         # check
         elif text == 'c':
             PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)
-            view.show()
+            view.show()        
+        # toggle track view
+        elif text == 't':
+            if self.trackview.visible:
+                self.pr_view.remove_widget(self.trackview)
+                self.trackview.visible = False
+            else:
+                self.pr_view.add_widget(self.trackview)
+                self.trackview.visible = True
         return True
 
 if __name__ == '__main__':
@@ -186,7 +197,7 @@ if __name__ == '__main__':
         def build(self):
             # window size / position
             Window.size = (800, 600)
-            Window.left, Window.top = 3100, 100
+            Window.left, Window.top = 50, 25
 
             # members
             self.pr_root = PrRoot()
