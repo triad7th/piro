@@ -33,7 +33,10 @@ class PrMidi():
         self.ppqn = None
         self.spt = None
         self.msg = None
-        self.next_evt_time = 0
+        self.cur_evt_time = .0
+        self.cur_evt_tick = .0
+        self.next_evt_time = .0
+        self.next_evt_tick = .0   
         self.start_time = .0
 
         # clock and helper classes
@@ -51,7 +54,9 @@ class PrMidi():
             clock.set_timer(1)
             # load midi file
             self.midi_file = mido.MidiFile(midi_filename)
-            print("open midifile : ", clock.elapsed(1))            
+            print("open midifile : ", clock.elapsed(1))
+            # set iter_by_tick
+            self.iter_by_tick = True          
             # load iteration of it
             self.midi_iter = iter(self.midi_file)
             # set relative variables
@@ -61,7 +66,10 @@ class PrMidi():
             self.bpm = mido.tempo2bpm(self.tempo)
             self.ppqn = self.get_ppqn()
             self.spt = self.get_spt()
-            self.next_evt_time = 0
+            self.cur_evt_time = .0
+            self.cur_evt_tick = .0
+            self.next_evt_time = .0            
+            self.next_evt_tick = .0
             self.playing = False
             self.msg = None
             clock.set_timer(1)
@@ -78,6 +86,8 @@ class PrMidi():
 
         # reload
         if self.midi_file and self.port:
+            # set iter_by_tick
+            self.iter_by_tick = True
             # reset port
             self.port.reset()
             # reset iteration of midi file
@@ -88,7 +98,10 @@ class PrMidi():
             self.bpm = mido.tempo2bpm(self.tempo)
             self.ppqn = self.get_ppqn()
             self.spt = self.get_spt()
-            self.next_evt_time = 0
+            self.cur_evt_time = .0
+            self.cur_evt_tick = .0
+            self.next_evt_time = .0            
+            self.next_evt_tick = .0
             self.playing = False
             self.msg = None
             self.length = self.get_length(force=True)
@@ -121,7 +134,7 @@ class PrMidi():
         if force or not self.totalticks:
             self.get_length(force=True)
         return self.totalticks
-    def get_length(self, force=False):
+    def get_length(self, force=False, ticks=False):
         """ get total length of the song """
         if force or not self.length:
             """ reset the legnth """
@@ -159,13 +172,16 @@ class PrMidi():
             # calculate and set the length
             self.length = tempolen + mido.tick2second(totalticks-tempoticks, ppqn, lasttempo)
             self.totalticks = totalticks
-
-        return self.length
+        if ticks:
+            return self.totalticks
+        else:
+            return self.length
     
     # midifile trigger/play/stop
     def trigger(self, msg=None, callback=None, callback_timebar=None):
         """ trigger midifile play """
         if not self.playing:
+            self.midi_file.iter_by_tick = True
             # set flag
             self.playing = True
             PrHelper.msg('PrMidi', 'Played at', '{0:10.4f} sec'.format(self.start_time))
@@ -176,7 +192,11 @@ class PrMidi():
                 pass
             else:
                 # set the next event time
-                self.next_evt_time += msg.time
+                time = mido.tick2second(msg.time, self.midi_file.ticks_per_beat, self.midi_file.tempo)
+                self.cur_evt_time = self.next_evt_time
+                self.cur_evt_tick = self.next_evt_tick
+                self.next_evt_time += time
+                self.next_evt_tick += msg.time
 
                 # set the callback
                 self.callback = callback
@@ -205,7 +225,11 @@ class PrMidi():
                 except StopIteration:
                     self.stop()
                 else:
-                    self.next_evt_time += self.msg.time
+                    time = mido.tick2second(self.msg.time, self.midi_file.ticks_per_beat, self.midi_file.tempo)
+                    self.cur_evt_time = self.next_evt_time
+                    self.cur_evt_tick = self.next_evt_tick
+                    self.next_evt_time += time
+                    self.next_evt_tick += self.msg.time
     def stop(self):
         """ stop the current playback """
         if self.playing:
@@ -232,7 +256,10 @@ class PrMidi():
         self.port.reset()
         self.clock.set_timer()
         self.start_time = .0
+        self.cur_evt_time = .0
+        self.cur_evt_tick = .0
         self.next_evt_time = .0
+        self.next_evt_tick = .0
         del self.midi_iter
         self.midi_iter = iter(self.midi_file)
 
@@ -246,6 +273,9 @@ class PrMidi():
         else:
             self.port.send(msg)
             #self.helper.log(now, msg)
+
+    def second2tick(self, sec):
+        return mido.second2tick(sec, self.midi_file.ticks_per_beat, self.midi_file.tempo)
 
 if __name__ == '__main__':
     """

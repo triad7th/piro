@@ -29,7 +29,9 @@ class PrRoot(BoxLayout):
 
         # props
         self.midi = PrMidi(
-            midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
+            midi_filename='.\\midi\\midifiles\\a-whole-new-world.mid',
+            #midi_filename='.\\midi\\midifiles\\beethoven_pathetique2.mid',
+            #midi_filename='.\\midi\\midifiles\\fur-elise_a tempo.mid',
             midi_portname='Microsoft GS Wavetable Synth 0')
         self.orientation = 'vertical'
         self.now = .0
@@ -41,9 +43,9 @@ class PrRoot(BoxLayout):
 
         # widget shorthands
         self.pno = self.pr_piano_view.pr_piano
-        self.roll = self.pr_roll_view.child
         self.rollview = self.pr_roll_view
         self.pianoview = self.pr_piano_view
+        self.trackview = self.pr_track_view
 
         # bind - keystrokes
         Window.bind(on_key_up=self._keyup)
@@ -67,14 +69,17 @@ class PrRoot(BoxLayout):
         # small widgets
         if self.pr_view:
             self.pr_piano_view = widgets.PrPianoView()
-            self.pr_roll_view = widgets.PrRollView()
+            self.pr_roll_view = widgets.PrRollView(self.midi)
+            self.pr_track_view = widgets.PrTrackView(self.pr_roll_view.roll)
+            self.pr_ruler_view = widgets.PrRulerView(self.pr_roll_view.roll)
 
         # add small widgets
         if self.pr_view:
             self.pr_view.add_widget(self.pr_piano_view)
             self.pr_view.add_widget(self.pr_roll_view)
+            self.pr_view.add_widget(self.pr_track_view)
         # add big widgets
-        self.add_widget(self.pr_menu)
+        #self.add_widget(self.pr_menu)
         self.add_widget(self.pr_view)
     def widget_bind(self):
         """
@@ -92,21 +97,12 @@ class PrRoot(BoxLayout):
         self.pr_menu.btn_play.bind(on_press=self._menu_button_play)
         self.pr_menu.btn_test.bind(on_press=self._menu_button_test)
     def draw_roll(self, instance):
-        # widgets
-        rollview = self.rollview
-        roll = self.roll
-
-        # draw meterbars / notes
-        roll._draw_meterbars(midi=self.midi)
-        roll._draw_notes(midi=self.midi)
-
         # adjust y scroll
-        if rollview.height < roll.height:
-            rollview.scroll_y = ( ( roll.height - rollview.height ) / 2 ) / rollview.height
-        
+        self.rollview.horizontal_focus()
+
         # adjust zoom factor
-        pipqn = self.midi.ppqn * ( roll.width / self.midi.totalticks )
-        roll.zoom_to( PrEnv.PIPQN / pipqn )
+        # pipqn = self.midi.ppqn * ( roll.width / self.midi.totalticks )
+        # roll.zoom_to( PrEnv.PIPQN / pipqn )
 
     # callback - scroll_stop
     def _scroll_start(self, instance, scroll_y):
@@ -133,11 +129,18 @@ class PrRoot(BoxLayout):
 
     # callback - midi play
     def _play_callback_timebar(self, instance, now):
-        """Callback for Timebar - !!! frequent calls !!!"""
-        if now - self.now > 0.025:
-            self.now = now            
-            self.bar_x = self.roll.set_timebar(now)
-            self.rollview.focus(self.bar_x)
+        """Callback for Timebar - !!! frequent calls !!!"""        
+        dsec = now - self.now        
+        if dsec > 0.025:
+            dbar = now - self.midi.cur_evt_time
+            dtick = self.midi.second2tick(dbar)            
+            self.now = now
+            self.rollview.focus(
+                self.rollview.set_timebar(
+                    itick=self.midi.cur_evt_tick + dtick
+                )
+            )
+
     def _play_callback(self, instance, msg, now):
         '''Callback for Play'''
         self.pno.play(msg)      
@@ -157,13 +160,36 @@ class PrRoot(BoxLayout):
     def _keydown(self, instance, key, keycode, text, modifiers):
         """Callback for KeyDown"""
         view = self.rollview
-        roll = self.roll
         # zoom out
-        if text == 'g':
+        if text == 'h':
             view.zoom_in()
+            view.focus(view.timebar, pos='mid')
         # zoom in
-        elif text == 'h':
+        elif text == 'g':
             view.zoom_out()
+            view.focus(view.timebar, pos='mid')
+        # focus
+        elif text == 'f':
+            view.focus(view.timebar, pos='mid')
+        # track
+        elif text >= '0' and text <= '9':
+            track = view.child.tracks.get(int(text))
+            if track:
+                if track.visible:
+                    view.child.hide_track(int(text))
+                else:
+                    view.child.show_track(int(text))
+            self.trackview.refresh()
+        # track hide all
+        elif text =='x':
+            for i in view.child.tracks.tracks:
+                view.child.hide_track(i)
+            self.trackview.refresh()
+        # track show all
+        elif text == 's':
+            for i in view.child.tracks.tracks:
+                view.child.show_track(i)
+            self.trackview.refresh()
         # play
         elif text == ' ':
             self._menu_button_play(self.pr_menu.btn_play)
@@ -171,12 +197,33 @@ class PrRoot(BoxLayout):
         elif text == 'w':            
             self.midi.rewind()
             self.now=.0
-            view.focus(roll.set_timebar(self.now))
+            view.focus(view.set_timebar(time=self.now))
         # check
         elif text == 'c':
-            PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)
-            view.show()
+            PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)  
+        # toggle track view
+        elif text == 't':
+            if self.trackview.visible:
+                self.pr_view.remove_widget(self.trackview)
+                self.trackview.visible = False
+            else:
+                self.pr_view.add_widget(self.trackview)
+                self.trackview.visible = True
         return True
 
 if __name__ == '__main__':
-    print("root widget")
+    class PrApp(App):
+        """Main App"""
+        def build(self):
+            # window size / position
+            Window.size = (800, 600)
+            Window.left, Window.top = 50, 25
+
+            # members
+            self.pr_root = PrRoot()
+
+            # return
+            return self.pr_root
+
+    if __name__ == '__main__':
+        PrApp().run()

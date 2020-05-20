@@ -2,37 +2,48 @@
 import sys
 sys.path.append(".\\")
 #endregion
-from piro.widgets.zoomview import PrZoomView
-from piro.widgets.roll import PrRoll
+from kivy.graphics import PushMatrix, PopMatrix, Scale
+from kivy.uix.scrollview import ScrollView
+from kivy.effects.scroll import ScrollEffect
+from kivy.core.window import Window
+from kivy.clock import Clock
 from piro.midi.helper import PrHelper
 
-class PrRollView(PrZoomView):
+class PrZoomView(ScrollView):
     """
-        PrRollView
+        PrZoomView
         ============
 
-        based on PrZoomView, this widget provides :
+        provides a container for PrRoll with these functions
 
-        1. automatically set child as PrRoll
-        2. timebar select
-        3. focus based on the given time
-        4. convenient props for users
-       
+        1. Scroll [horizontal/vertical]
+        2. Zoom [in/out]
+        3. You must set the child widget - it can be any kivy widget.
+        
     """
-    def __init__(self, midi, **kwargs):
-        # create a PrRoll oject
-        self.roll = PrRoll(midi)
-
+    def __init__(self, child, **kwargs):
         # make sure we aren't overriding any important functionality
-        super(PrRollView, self).__init__(self.roll, **kwargs)
+        super(PrZoomView, self).__init__(**kwargs)
 
-        # bind touch down
-        self.roll.on_touch_down=self._roll_click
+        # kivy props
+        self.size_hint=(1, 1)
+        self.bar_width = 25
+        self.scroll_type = ['bars']
+        # No Effect for Scroll - kivy's scroll effect is buggy. I won't use it!
+        self.effect_cls = ScrollEffect
 
+        """ load child
+
+            self.child : child object (any kivy widget)
+            self.child_scale
+            self.child_width : child width at scale 1.0
+            self.child_height : child height at scale 1.0
+        """
+        self.child = None
+        self.load_child(child)
 
     # public methods
-<<<<<<< HEAD
-    def get_x(self, x):
+    def child_x(self, x):
         return self.child_scale * x
     def load_child(self, child):
         if self.child:
@@ -56,24 +67,6 @@ class PrRollView(PrZoomView):
         self.add_widget(self.child)
         # return self
         return self
-    
-    # public methods - scroll
-    def focus(self, x):
-        """Scroll to the x"""
-        if self.local_left <= x and x <= self.local_right:
-            pass
-        else:
-            self.scroll_x = x / self.scroll_width          
-            self.update_from_scroll()
-    
-    # public methods - zoom
-    def zoom_in(self, factor=1.1):
-        self._zoom_by(factor)
-    def zoom_out(self, factor=0.9):
-        self._zoom_by(factor)
-    def zoom_to(self, factor):
-        self.child_scale.x = factor
-        self.child.width = self.child_width * factor
 
     @property
     def local_left(self):
@@ -87,37 +80,49 @@ class PrRollView(PrZoomView):
     @property
     def scale(self):
         return self.child_scale
+    @property
+    def timebar(self):
+        return self.child._timebar.points[0] * self.child_scale.x
 
-    # zoom by
-    def _zoom_by(self, factor):
-        self.child_scale.x *= factor
+    # focus
+    def focus(self, x, pos='left'):
+        """Scroll to the x"""
+        if pos == 'left':
+            if self.local_left <= x and x <= self.local_right:
+                pass
+            else:
+                self.scroll_x = x / self.scroll_width          
+                self.update_from_scroll()
+        elif pos == 'mid':
+            x = max(0, x-(self.local_right-self.local_left)/2)
+            self.scroll_x = x / self.scroll_width
+            self.update_from_scroll()            
+
+    # horizontal focus
+    def horizontal_focus(self):
+        """Focus horizontally"""
+        if self.height < self.child.height:
+            self.scroll_y = ( ( self.child.height - self.height ) / 2 ) / self.child.height
+            self.update_from_scroll()
+        
+    # zoom in/out
+    def zoom_in(self):
+        self.child_scale.x *= 1.1
+        self.child.width *= 1.1
+    def zoom_out(self):
+        self.child_scale.x /= 1.1
+        self.child.width /= 1.1
+    def zoom_to(self, factor):
+        self.child_scale.x = factor
         self.child.width *= factor
-    
-=======
-    def load(self, midi):
-        """ load a new PrMidi object """
-        roll = self.roll
-        roll.load_midi(midi)
-        self.load_child(roll)
-    def set_timebar(self, time=None, x=None, itick=None):
-        if time:
-            return self.child.set_timebar(time, x) * self.scale.x
-        elif itick:
-            return self.child.set_timebar(tick=itick, x=None) * self.scale.x
-        else:
-            return self.child.set_timebar(time, x)
 
-    # callbacks
-    def _roll_click(self, touch):        
-        self.set_timebar(self, x=touch.pos[0]/self.scale.x)            
-
->>>>>>> 8d3b0c18255f3655b68ded081a84d97b1202c99c
 if __name__ == '__main__':
     from kivy.app import App
     from kivy.core.window import Window
     from kivy.uix.boxlayout import BoxLayout
     from piro.midi.clock import PrClock
     from piro.midi.play import PrMidi
+    from piro.widgets.roll import PrRoll
     class PrApp(App):
         """Main App"""
         def build(self):
@@ -131,6 +136,7 @@ if __name__ == '__main__':
 
             # bind - keystrokes
             Window.bind(on_key_down=keydown)        
+            roll.bind(on_touch_down=on_touch_down)
 
             PrClock.schedule_once(trigger, 0)
             # return
@@ -138,19 +144,28 @@ if __name__ == '__main__':
 
     def trigger(instance):
         #midi.trigger(callback=play, callback_timebar=mypass)
-        print ('roll size :', view.child.size)
-        print ('pipqn :', midi.ppqn * ( view.child.width / midi.totalticks ))
+        print ('roll size :', roll.size)
+        print ('pipqn :', midi.ppqn * ( roll.width / midi.totalticks ))
         print ('zoom :', view.scale.x )
         print ('child :', view.child_width, view.child_height)
         print ('view :', view.size)
+    def play(i, msg, now):
+        roll.play(msg)
+    def mypass(i, now):
+        pass
+    def on_touch_down(self, touch):
+        print(touch, view.local_left, view.local_right)
+        roll.set_timebar(x=touch.pos[0]/view.scale.x)
     def keydown(instance, key, keycode, text, modifiers):
         """Callback for KeyDown"""
         # zoom out
         if text == 'g':
             view.zoom_in()
+            print(view.local_left, view.local_right, view.scroll_width, view.scale.x)
         # zoom in
         elif text == 'h':
             view.zoom_out()
+            print(view.local_left, view.local_right, view.scroll_width, view.scale.x)
         # play
         elif text == ' ':
             PrHelper.msg('keydown','play')
@@ -173,5 +188,6 @@ if __name__ == '__main__':
     midi = PrMidi(
         midi_filename='.\\midi\\midifiles\\fur-elise_short.mid',
         midi_portname='Microsoft GS Wavetable Synth 0')
-    view = PrRollView(midi)
+    roll = PrRoll(midi)
+    view = PrZoomView(roll)
     PrApp().run()

@@ -19,3 +19,4 @@ class PrPianoView(ScrollView):
 
         # child layout
         self.add_widget(self.pr_piano)
+

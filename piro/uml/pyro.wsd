@@ -1,0 +1,45 @@
+@startuml
+
+Class PrPiano {
+    canvas
+    play()
+    stop()
+}
+
+Class PrRoll {
+    midi
+    load_midi()
+    set_timebar()
+    get_timebar()
+}
+
+Class PrZoomView {
+    child_x
+    --
+    load_child()
+    ==extends==
+    ScrollView
+}
+
+Class PrRollView {
+    PrRoll
+    set_timebar()
+}
+
+Class PrPianoView {
+    PrPiano  
+    ==extends==
+    ScrollView
+}
+
+hide PrZoomView
+
+PrRoot "1" *-- PrPianoView : contains
+PrRoot "1" *-- PrRollView : contains
+
+PrPianoView "1" *-- PrPiano : contains
+PrRollView "1" *-- PrRoll : contains
+
+PrRollView <|-- PrZoomView : extends
+
+@enduml

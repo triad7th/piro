@@ -2,12 +2,16 @@
 import sys
 sys.path.append(".\\")
 #endregion
+from piro.widgets.tracks import PrTrack, PrTracks
+
 from kivy.graphics import Color, Line, Rectangle
 from kivy.graphics.instructions import InstructionGroup
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
 from piro.midi.clock import PrClock
 from piro.env import PrEnv as Env
+
+
 
 class PrRoll(BoxLayout):
     """
@@ -42,7 +46,7 @@ class PrRoll(BoxLayout):
         self.notemap = Env.ROLL_NOTEMAP()
 
         # instruction groups
-        self.notes = {'all':InstructionGroup()}
+        self.tracks = PrTracks()
         self.meterbars = {'bar':InstructionGroup()}
         self.timebar = InstructionGroup()
 
@@ -53,17 +57,30 @@ class PrRoll(BoxLayout):
         self.load_midi(midi)
     
     # public methods    
-    def set_timebar(self, time=.0):
+    def set_timebar(self, time=.0, x=None, tick=None):
         """draw a timebar at the given time(sec)"""
-        if self.pips:
+        if x:
+            self._timebar.points = [x, 0, x, self.height]
+            return x
+        elif tick:
+            x = self.pipt * tick
+            self._timebar.points = [x, 0, x, self.height]
+            return x
+        elif self.pips:
             x = self.pips * time
             self._timebar.points = [x, 0, x, self.height]
             return x
         return None
-    def get_timebar(self, time=.0):
+    def get_timebar(self, time=None, tick=None):
         """get the current x-pos(pixel) of the timebar"""
-        if self.pips:
-            return self.pips * time
+        if time:
+            if self.pips:
+                return self.pips * time
+        elif tick:
+            if self.pipt:
+                return self.pipt * time
+        elif self._timebar:
+            return self._timebar.points[0]
         return None
     def load_midi(self, midi):
         """reset the roll and load a new midi file"""
@@ -74,6 +91,12 @@ class PrRoll(BoxLayout):
         self._draw_meterbars()
         self._draw_notes()
         return self
+    def hide_track(self, track_no):
+        self.tracks.hide(track_no)
+    def show_track(self, track_no):
+        self.tracks.show(track_no)
+    def get_tracks(self):
+        return self.tracks
 
     # draw modules
     def _draw_timebar(self):
@@ -98,7 +121,8 @@ class PrRoll(BoxLayout):
         pipqn = midi.ppqn * ppt
 
         # store pips
-        self.pips = self.abs_width / self.midi.get_length()        
+        self.pips = self.abs_width / self.midi.get_length()
+        self.pipt = self.abs_width / self.midi.get_length(ticks=True)  
         
         # color pick
         self.meterbars['bar'].add(Color(*Env.ROLL_METERBAR_COLOR))
@@ -144,36 +168,44 @@ class PrRoll(BoxLayout):
                         next_meter = None
             
             x += pibar
+
     def _draw_notes(self):
         """ draw noteoverlay """
+        for tr_no, track in enumerate(self.midi.midi_file.tracks):
+            self._draw_track(track, tr_no, Env.NOTE_COLOR[tr_no])
+
+    def _draw_track(self, tr_midi, tr_no, tr_color):
+        """ draw note for one track """
         # notes
         note_ons = {}
 
-        # midi
-        midi = self.midi
-
         # clear note overlay
-        self.notes['all'].clear()
+        track = self.tracks.get(tr_no)
+        if track:
+            track.canvas.clear()
 
         # color pick
-        self.notes['all'].add(Color(0.5, 0.5, 0.5, 1))
+        track.paint(tr_color)
 
         # tick realted
         tick = 0
         totalticks = self.midi.get_totalticks()
         pptick = self.width / totalticks
 
-        for msg in midi.midi_file.tracks[1]:
+        # print
+        print( "{0:0>2} | {1: >5} | {2: <16} | {3: >20} | totalticks : {4:08}".format(tr_no, '', tr_midi.name, str(tr_color), totalticks))
+
+        for msg in tr_midi:
             # time count
             tick += msg.time
             if not msg.is_meta:
-                if msg.type == 'note_on':
+                if msg.type == 'note_on' or msg.type == 'note_off':
                     # current x position
                     x = tick * pptick
                     # get the note history
                     note_on = note_ons.get(msg.note)
                     if note_on:
-                        if msg.velocity == 0:                            
+                        if msg.velocity == 0 or msg.type == 'note_off':                            
                             # calculate note info
                             note_off = self.notemap[msg.note]
                             note_off['width'] = x - note_on['x']
@@ -183,8 +215,8 @@ class PrRoll(BoxLayout):
                             size = ( note_off['width'], note_off['height']-1 )
 
                             # draw rectangle
-                            self.notes['all'].add(
-                                Rectangle(pos=pos, size=size, group='all')
+                            track.canvas.add(
+                                Rectangle(pos=pos, size=size, group='Tr{0}'.format(tr_no))
                             )
 
                             # clear note_on
@@ -266,7 +298,10 @@ class PrRoll(BoxLayout):
         #
         # note overlay - all
         #
-        self.canvas.add(self.notes['all'])
+        for ov in range(17):
+            track = PrTrack(ov, True)
+            self.tracks.add(ov, track)    
+        self.canvas.add(self.tracks.draw())
 
         #
         # timebar
@@ -286,8 +321,8 @@ if __name__ == '__main__':
         """Main App"""
         def build(self):
             # window size / position
-            Window.size = (1280, 1280)
-            Window.left, Window.top = 30, 30
+            Window.size = (1280, 600)
+            Window.left, Window.top = 3100, 30
 
             # members
             self.layout = BoxLayout()
