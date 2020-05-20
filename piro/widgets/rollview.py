@@ -31,6 +31,71 @@ class PrRollView(PrZoomView):
 
 
     # public methods
+<<<<<<< HEAD
+<<<<<<< HEAD
+    def get_x(self, x):
+=======
+    def child_x(self, x):
+>>>>>>> parent of 0bc183d... update
+        return self.child_scale * x
+    def load_child(self, child):
+        if self.child:
+            self.remove_widget(self.child)
+        # members
+        self.child = child
+        # zoom in/out props
+        self.child_width = self.child.width
+        self.child_height = self.child.height
+
+        self.child.canvas.before.clear()
+        with child.canvas.before:
+            PushMatrix()
+            self.child_scale = Scale(1.0)
+
+        self.child.canvas.after.clear()
+        with child.canvas.after:
+            PopMatrix()
+
+        # add child
+        self.add_widget(self.child)
+        # return self
+        return self
+
+    @property
+    def local_left(self):
+        return self.to_local(self.x, 0)[0]
+    @property
+    def local_right(self):
+        return self.to_local(self.width + self.x, 0)[0]
+    @property
+    def scroll_width(self):
+        return self.child.width - self.width
+    @property
+    def scale(self):
+        return self.child_scale
+
+    # focus
+    def focus(self, x):
+        """Scroll to the x"""
+        if self.local_left <= x and x <= self.local_right:
+            pass
+        else:
+            self.scroll_x = x / self.scroll_width          
+            self.update_from_scroll()
+
+    # zoom in/out
+    def zoom_in(self):
+        self.child_scale.x *= 1.1
+        self.child.width *= 1.1
+    def zoom_out(self):
+        self.child_scale.x /= 1.1
+        self.child.width /= 1.1
+    def zoom_to(self, factor):
+        self.child_scale.x = factor
+        self.child.width *= factor
+<<<<<<< HEAD
+    
+=======
     def load(self, midi):
         """ load a new PrMidi object """
         roll = self.roll
@@ -46,6 +111,10 @@ class PrRollView(PrZoomView):
     def _roll_click(self, touch):        
         self.set_timebar(self, x=touch.pos[0]/self.scale.x)            
 
+>>>>>>> 8d3b0c18255f3655b68ded081a84d97b1202c99c
+=======
+
+>>>>>>> parent of 0bc183d... update
 if __name__ == '__main__':
     from kivy.app import App
     from kivy.core.window import Window
