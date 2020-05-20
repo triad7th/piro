@@ -32,7 +32,11 @@ class PrRollView(PrZoomView):
 
     # public methods
 <<<<<<< HEAD
+<<<<<<< HEAD
     def get_x(self, x):
+=======
+    def child_x(self, x):
+>>>>>>> parent of 0bc183d... update
         return self.child_scale * x
     def load_child(self, child):
         if self.child:
@@ -56,24 +60,6 @@ class PrRollView(PrZoomView):
         self.add_widget(self.child)
         # return self
         return self
-    
-    # public methods - scroll
-    def focus(self, x):
-        """Scroll to the x"""
-        if self.local_left <= x and x <= self.local_right:
-            pass
-        else:
-            self.scroll_x = x / self.scroll_width          
-            self.update_from_scroll()
-    
-    # public methods - zoom
-    def zoom_in(self, factor=1.1):
-        self._zoom_by(factor)
-    def zoom_out(self, factor=0.9):
-        self._zoom_by(factor)
-    def zoom_to(self, factor):
-        self.child_scale.x = factor
-        self.child.width = self.child_width * factor
 
     @property
     def local_left(self):
@@ -88,10 +74,26 @@ class PrRollView(PrZoomView):
     def scale(self):
         return self.child_scale
 
-    # zoom by
-    def _zoom_by(self, factor):
-        self.child_scale.x *= factor
+    # focus
+    def focus(self, x):
+        """Scroll to the x"""
+        if self.local_left <= x and x <= self.local_right:
+            pass
+        else:
+            self.scroll_x = x / self.scroll_width          
+            self.update_from_scroll()
+
+    # zoom in/out
+    def zoom_in(self):
+        self.child_scale.x *= 1.1
+        self.child.width *= 1.1
+    def zoom_out(self):
+        self.child_scale.x /= 1.1
+        self.child.width /= 1.1
+    def zoom_to(self, factor):
+        self.child_scale.x = factor
         self.child.width *= factor
+<<<<<<< HEAD
     
 =======
     def load(self, midi):
@@ -112,6 +114,9 @@ class PrRollView(PrZoomView):
         self.set_timebar(self, x=touch.pos[0]/self.scale.x)            
 
 >>>>>>> 8d3b0c18255f3655b68ded081a84d97b1202c99c
+=======
+
+>>>>>>> parent of 0bc183d... update
 if __name__ == '__main__':
     from kivy.app import App
     from kivy.core.window import Window
