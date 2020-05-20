@@ -43,7 +43,7 @@ class PrRollView(ScrollView):
         self.load_child(child)
 
     # public methods
-    def child_x(self, x):
+    def get_x(self, x):
         return self.child_scale * x
     def load_child(self, child):
         if self.child:
@@ -67,6 +67,24 @@ class PrRollView(ScrollView):
         self.add_widget(self.child)
         # return self
         return self
+    
+    # public methods - scroll
+    def focus(self, x):
+        """Scroll to the x"""
+        if self.local_left <= x and x <= self.local_right:
+            pass
+        else:
+            self.scroll_x = x / self.scroll_width          
+            self.update_from_scroll()
+    
+    # public methods - zoom
+    def zoom_in(self, factor=1.1):
+        self._zoom_by(factor)
+    def zoom_out(self, factor=0.9):
+        self._zoom_by(factor)
+    def zoom_to(self, factor):
+        self.child_scale.x = factor
+        self.child.width = self.child_width * factor
 
     @property
     def local_left(self):
@@ -81,26 +99,11 @@ class PrRollView(ScrollView):
     def scale(self):
         return self.child_scale
 
-    # focus
-    def focus(self, x):
-        """Scroll to the x"""
-        if self.local_left <= x and x <= self.local_right:
-            pass
-        else:
-            self.scroll_x = x / self.scroll_width          
-            self.update_from_scroll()
-
-    # zoom in/out
-    def zoom_in(self):
-        self.child_scale.x *= 1.1
-        self.child.width *= 1.1
-    def zoom_out(self):
-        self.child_scale.x /= 1.1
-        self.child.width /= 1.1
-    def zoom_to(self, factor):
-        self.child_scale.x = factor
+    # zoom by
+    def _zoom_by(self, factor):
+        self.child_scale.x *= factor
         self.child.width *= factor
-
+    
 if __name__ == '__main__':
     from kivy.app import App
     from kivy.core.window import Window
