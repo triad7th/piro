@@ -29,9 +29,7 @@ class PrRoot(BoxLayout):
 
         # props
         self.midi = PrMidi(
-            #midi_filename='.\\midi\\midifiles\\a-whole-new-world.mid',
-            #midi_filename='.\\midi\\midifiles\\beethoven_pathetique2.mid',
-            midi_filename='.\\midi\\midifiles\\fur-elise_a tempo.mid',
+            midi_filename='.\\midi\\midifiles\\a-whole-new-world.mid',
             midi_portname='Microsoft GS Wavetable Synth 0')
         self.orientation = 'vertical'
         self.now = .0
@@ -192,7 +190,8 @@ class PrRoot(BoxLayout):
             view.focus(view.set_timebar(time=self.now))
         # check
         elif text == 'c':
-            PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)  
+            PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)
+            view.show()        
         # toggle track view
         elif text == 't':
             if self.trackview.visible:
