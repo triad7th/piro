@@ -29,7 +29,13 @@ class PrRoot(BoxLayout):
 
         # props
         self.midi = PrMidi(
+<<<<<<< HEAD
             midi_filename='.\\midi\\midifiles\\a-whole-new-world.mid',
+=======
+            #midi_filename='.\\midi\\midifiles\\a-whole-new-world.mid',
+            #midi_filename='.\\midi\\midifiles\\beethoven_pathetique2.mid',
+            midi_filename='.\\midi\\midifiles\\fur-elise_a tempo.mid',
+>>>>>>> parent of c591fae... track view
             midi_portname='Microsoft GS Wavetable Synth 0')
         self.orientation = 'vertical'
         self.now = .0
@@ -68,7 +74,11 @@ class PrRoot(BoxLayout):
         if self.pr_view:
             self.pr_piano_view = widgets.PrPianoView()
             self.pr_roll_view = widgets.PrRollView(self.midi)
+<<<<<<< HEAD
             self.pr_track_view = widgets.PrTrackView()
+=======
+            self.pr_track_view = widgets.PrTrackView(self.pr_roll_view.roll)
+>>>>>>> parent of c591fae... track view
 
         # add small widgets
         if self.pr_view:
