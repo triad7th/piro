@@ -29,9 +29,13 @@ class PrRoot(BoxLayout):
 
         # props
         self.midi = PrMidi(
+<<<<<<< HEAD
             midi_filename='.\\midi\\midifiles\\a-whole-new-world.mid',
+=======
+            #midi_filename='.\\midi\\midifiles\\a-whole-new-world.mid',
             #midi_filename='.\\midi\\midifiles\\beethoven_pathetique2.mid',
-            #midi_filename='.\\midi\\midifiles\\fur-elise_a tempo.mid',
+            midi_filename='.\\midi\\midifiles\\fur-elise_a tempo.mid',
+>>>>>>> parent of c591fae... track view
             midi_portname='Microsoft GS Wavetable Synth 0')
         self.orientation = 'vertical'
         self.now = .0
@@ -70,8 +74,11 @@ class PrRoot(BoxLayout):
         if self.pr_view:
             self.pr_piano_view = widgets.PrPianoView()
             self.pr_roll_view = widgets.PrRollView(self.midi)
+<<<<<<< HEAD
+            self.pr_track_view = widgets.PrTrackView()
+=======
             self.pr_track_view = widgets.PrTrackView(self.pr_roll_view.roll)
-            self.pr_ruler_view = widgets.PrRulerView(self.pr_roll_view.roll)
+>>>>>>> parent of c591fae... track view
 
         # add small widgets
         if self.pr_view:
@@ -129,17 +136,10 @@ class PrRoot(BoxLayout):
 
     # callback - midi play
     def _play_callback_timebar(self, instance, now):
-        """Callback for Timebar - !!! frequent calls !!!"""        
-        dsec = now - self.now        
-        if dsec > 0.025:
-            dbar = now - self.midi.cur_evt_time
-            dtick = self.midi.second2tick(dbar)            
-            self.now = now
-            self.rollview.focus(
-                self.rollview.set_timebar(
-                    itick=self.midi.cur_evt_tick + dtick
-                )
-            )
+        """Callback for Timebar - !!! frequent calls !!!"""
+        if now - self.now > 0.025:
+            self.now = now            
+            self.rollview.focus(self.rollview.set_timebar(time=now))
 
     def _play_callback(self, instance, msg, now):
         '''Callback for Play'''
@@ -179,17 +179,6 @@ class PrRoot(BoxLayout):
                     view.child.hide_track(int(text))
                 else:
                     view.child.show_track(int(text))
-            self.trackview.refresh()
-        # track hide all
-        elif text =='x':
-            for i in view.child.tracks.tracks:
-                view.child.hide_track(i)
-            self.trackview.refresh()
-        # track show all
-        elif text == 's':
-            for i in view.child.tracks.tracks:
-                view.child.show_track(i)
-            self.trackview.refresh()
         # play
         elif text == ' ':
             self._menu_button_play(self.pr_menu.btn_play)
@@ -200,7 +189,8 @@ class PrRoot(BoxLayout):
             view.focus(view.set_timebar(time=self.now))
         # check
         elif text == 'c':
-            PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)  
+            PrHelper.msg('PrRoot', 'scroll_y', self.pr_roll_view.scroll_y)
+            view.show()        
         # toggle track view
         elif text == 't':
             if self.trackview.visible:
