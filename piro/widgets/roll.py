@@ -57,13 +57,9 @@ class PrRoll(BoxLayout):
         self.load_midi(midi)
     
     # public methods    
-    def set_timebar(self, time=.0, x=None, tick=None):
+    def set_timebar(self, time=.0, x=None):
         """draw a timebar at the given time(sec)"""
         if x:
-            self._timebar.points = [x, 0, x, self.height]
-            return x
-        elif tick:
-            x = self.pipt * tick
             self._timebar.points = [x, 0, x, self.height]
             return x
         elif self.pips:
@@ -71,14 +67,11 @@ class PrRoll(BoxLayout):
             self._timebar.points = [x, 0, x, self.height]
             return x
         return None
-    def get_timebar(self, time=None, tick=None):
+    def get_timebar(self, time=None):
         """get the current x-pos(pixel) of the timebar"""
         if time:
             if self.pips:
                 return self.pips * time
-        elif tick:
-            if self.pipt:
-                return self.pipt * time
         elif self._timebar:
             return self._timebar.points[0]
         return None
@@ -121,8 +114,7 @@ class PrRoll(BoxLayout):
         pipqn = midi.ppqn * ppt
 
         # store pips
-        self.pips = self.abs_width / self.midi.get_length()
-        self.pipt = self.abs_width / self.midi.get_length(ticks=True)  
+        self.pips = self.abs_width / self.midi.get_length()        
         
         # color pick
         self.meterbars['bar'].add(Color(*Env.ROLL_METERBAR_COLOR))
