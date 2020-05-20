@@ -68,7 +68,7 @@ class PrRoot(BoxLayout):
         if self.pr_view:
             self.pr_piano_view = widgets.PrPianoView()
             self.pr_roll_view = widgets.PrRollView(self.midi)
-            self.pr_track_view = widgets.PrTrackView(self.pr_roll_view.roll)
+            self.pr_track_view = widgets.PrTrackView()
 
         # add small widgets
         if self.pr_view:
@@ -169,17 +169,6 @@ class PrRoot(BoxLayout):
                     view.child.hide_track(int(text))
                 else:
                     view.child.show_track(int(text))
-            self.trackview.refresh()
-        # track hide all
-        elif text =='x':
-            for i in view.child.tracks.tracks:
-                view.child.hide_track(i)
-            self.trackview.refresh()
-        # track show all
-        elif text == 's':
-            for i in view.child.tracks.tracks:
-                view.child.show_track(i)
-            self.trackview.refresh()
         # play
         elif text == ' ':
             self._menu_button_play(self.pr_menu.btn_play)

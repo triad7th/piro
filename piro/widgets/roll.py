@@ -88,8 +88,6 @@ class PrRoll(BoxLayout):
         self.tracks.hide(track_no)
     def show_track(self, track_no):
         self.tracks.show(track_no)
-    def get_tracks(self):
-        return self.tracks
 
     # draw modules
     def _draw_timebar(self):
