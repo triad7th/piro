@@ -15,8 +15,8 @@ class PrApp(App):
     def build(self):
         # window size / position
         Window.size = (1024, 768)
-        Window.left, Window.top = 3100, 100
-
+        Window.left, Window.top = 0, 0
+        
         # members
         self.pr_root = PrRoot()
 
